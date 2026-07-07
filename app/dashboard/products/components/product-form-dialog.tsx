@@ -96,7 +96,22 @@ export function ProductFormDialog({
     field: Field,
     value: ProductFormValues[Field]
   ) {
-    setValues((current) => ({ ...current, [field]: value }))
+    setValues((current) => {
+      const nextValues = { ...current, [field]: value }
+      if (field === "quantity") {
+        const qty = Number(value)
+        if (!Number.isNaN(qty)) {
+          if (qty <= 0) {
+            nextValues.status = "out_of_stock"
+          } else if (qty <= 15) {
+            nextValues.status = "low_stock"
+          } else {
+            nextValues.status = "in_stock"
+          }
+        }
+      }
+      return nextValues
+    })
     setErrors((current) => ({ ...current, [field]: undefined }))
   }
 
@@ -128,7 +143,7 @@ export function ProductFormDialog({
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-lg">
+      <DialogContent className="w-[calc(100%-2rem)] sm:w-full max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{isEditing ? copy.editTitle : copy.addTitle}</DialogTitle>
           <DialogDescription>

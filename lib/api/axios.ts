@@ -1,6 +1,7 @@
 import axios, { AxiosHeaders } from "axios"
 
 import { getStoredAppLocale } from "@/lib/locale"
+import { clearAuthSession } from "@/lib/auth/auth-session"
 
 const ACCESS_TOKEN_KEY = "stock_web_access_token"
 
@@ -63,3 +64,21 @@ apiClient.interceptors.request.use((config) => {
 
   return config
 })
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
+      if (typeof window !== "undefined") {
+        clearAccessToken()
+        clearAuthSession()
+        const currentPath = window.location.pathname + window.location.search
+        // Avoid redirect loops if we are already on login/register pages
+        if (!window.location.pathname.startsWith("/auth/login") && !window.location.pathname.startsWith("/auth/register")) {
+          window.location.href = `/auth/login?redirectTo=${encodeURIComponent(currentPath)}`
+        }
+      }
+    }
+    return Promise.reject(error)
+  }
+)

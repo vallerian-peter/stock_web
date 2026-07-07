@@ -4,7 +4,8 @@ import { useEffect, useState, type FormEvent } from "react"
 import { PlusIcon, Trash2Icon, InfoIcon } from "lucide-react"
 import { toast } from "sonner"
 
-import { getParts } from "@/api/parts_api"
+import { createPart, getParts } from "@/api/parts_api"
+import { getCategories } from "@/api/categories_api"
 import { getApiErrorMessage } from "@/lib/api/request"
 import { Button } from "@/components/ui/button"
 import {
@@ -30,15 +31,38 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import type { PartResponseDTO } from "@/lib/dtos/part_dtos"
+import type { PartRequestDTO, PartResponseDTO } from "@/lib/dtos/part_dtos"
+import type { CategoryResponseDTO } from "@/lib/dtos/category_dtos"
+import { useLandingLocale } from "@/components/landing-locale-provider"
+import { ProductFormDialog } from "@/app/dashboard/products/components/product-form-dialog"
+import { productDialogCopy } from "@/app/dashboard/products/components/product-dialog-copy"
+import type { ProductFormValues } from "@/app/dashboard/products/components/product-schema"
 import type { IncomeStockDialogCopy } from "./income-stock-dialog-copy"
-import { createIncomeStockSchema, type IncomeStockFormValues } from "./income-stock-schema"
+import { type IncomeStockFormValues } from "./income-stock-schema"
 import { Spinner } from "@/components/ui/spinner"
+
+function mapFormValuesToRequest(
+  values: ProductFormValues,
+  imageFile: File | null
+): PartRequestDTO {
+  const nextImageLastModifiedAt = imageFile?.lastModified ?? null
+
+  return {
+    partName: values.partName.trim(),
+    partNumber: values.partNumber.trim(),
+    quantity: Number(values.quantity),
+    price: Number(values.price),
+    image: imageFile,
+    imageLastModifiedAt: nextImageLastModifiedAt,
+    categoryId: values.categoryId === "none" ? null : Number(values.categoryId),
+    status: values.status,
+  }
+}
 
 type IncomeStockFormDialogProps = {
   copy: IncomeStockDialogCopy
   onClose: () => void
-  onSubmit: (values: any) => Promise<void> | void
+  onSubmit: (values: IncomeStockFormValues) => Promise<void> | void
 }
 
 interface InlineRow {
@@ -75,23 +99,26 @@ export function IncomeStockFormDialog({
   ])
 
   const [catalogParts, setCatalogParts] = useState<PartResponseDTO[]>([])
-  const [isLoadingParts, setIsLoadingParts] = useState(false)
+  const [categories, setCategories] = useState<CategoryResponseDTO[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [activeNewPartRowLocalId, setActiveNewPartRowLocalId] = useState<string | null>(null)
+  const { locale } = useLandingLocale()
 
-  // Fetch Parts Catalog on mount
+  // Fetch Parts Catalog and Categories on mount
   useEffect(() => {
-    async function loadCatalog() {
+    async function loadCatalogAndCategories() {
       try {
-        setIsLoadingParts(true)
-        const res = await getParts({ page: 1, perPage: 250 })
-        setCatalogParts(res.data)
+        const [partsRes, categoriesRes] = await Promise.all([
+          getParts({ page: 1, perPage: 250 }),
+          getCategories({ page: 1, perPage: 100 })
+        ])
+        setCatalogParts(partsRes.data)
+        setCategories(categoriesRes.data)
       } catch (err) {
         toast.error(getApiErrorMessage(err))
-      } finally {
-        setIsLoadingParts(false)
       }
     }
-    void loadCatalog()
+    void loadCatalogAndCategories()
   }, [])
 
   function addRow() {
@@ -195,8 +222,9 @@ export function IncomeStockFormDialog({
   const grandTotal = items.reduce((acc, row) => acc + row.quantity * row.unitCost, 0)
 
   return (
-    <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="w-full max-w-5xl max-h-[92vh] overflow-y-auto rounded-2xl border border-border bg-card p-6 shadow-xl sm:max-w-5xl">
+    <>
+      <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="w-[95vw] sm:w-full sm:max-w-2xl md:max-w-4xl lg:max-w-6xl xl:max-w-7xl max-h-[92vh] overflow-y-auto rounded-2xl border border-border bg-card p-4 sm:p-6 shadow-xl">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold text-foreground">
             {copy.addTitle}
@@ -206,9 +234,9 @@ export function IncomeStockFormDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="mt-4 space-y-6" noValidate>
-          {/* Header Metadata fields */}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <form onSubmit={handleSubmit} className="mt-4 min-w-0 w-full space-y-6" noValidate>
+          {/* Header Metadata fields — stack on mobile, expand at breakpoints */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <InputField
               labelText={copy.supplierName}
               placeholder={copy.supplierNamePlaceholder}
@@ -245,13 +273,14 @@ export function IncomeStockFormDialog({
             />
           </Field>
 
-          {/* Inline Batch Input Table */}
-          <div className="rounded-xl border border-border bg-background/50 overflow-hidden [&_[data-slot=table-container]]:max-h-[320px] [&_[data-slot=table-container]]:overflow-y-auto">
-            <Table className="w-full min-w-[600px]">
-              <TableHeader className="bg-muted/40 sticky top-0 z-10 shadow-sm">
+          {/* Inline Batch Input Table — self-contained card, scrolls internally on small screens */}
+          <div className="w-full min-w-0 rounded-xl border border-border bg-background/50 overflow-hidden">
+            <div className="w-full overflow-x-auto [&_[data-slot=table-container]]:max-h-[320px] [&_[data-slot=table-container]]:overflow-y-auto">
+              <Table className="w-full min-w-[600px]">
+                <TableHeader className="bg-muted/40 sticky top-0 z-10 shadow-sm">
                 <TableRow>
                   <TableHead className="w-10">#</TableHead>
-                  <TableHead className="min-w-[280px]">{copy.partSearchPlaceholder}</TableHead>
+                  <TableHead className="min-w-[280px]">{copy.partLabel}</TableHead>
                   <TableHead className="w-24 text-right">{copy.qtyLabel}</TableHead>
                   <TableHead className="w-32 text-right">{copy.unitCostLabel}</TableHead>
                   <TableHead className="w-36 text-right">{copy.subtotalLabel}</TableHead>
@@ -289,20 +318,22 @@ export function IncomeStockFormDialog({
                                 onClick={() => {
                                   updateRow(row.localId, "partId", "")
                                   updateRow(row.localId, "partSearchText", "")
+                                  updateRow(row.localId, "quantity", 1)
+                                  updateRow(row.localId, "unitCost", 0)
                                 }}
                               >
-                                Change
+                                {copy.changeBtn}
                               </Button>
                             </div>
                           ) : (
-                            <Popover 
-                              open={row.showDropdown && row.partSearchText.trim().length > 0} 
-                              onOpenChange={(open) => {
-                                if (!open) updateRow(row.localId, "showDropdown", false)
-                              }}
-                            >
-                              <PopoverTrigger>
-                                <div className="relative w-full">
+                            <div className="flex items-center gap-1.5 w-full">
+                              <Popover 
+                                open={row.showDropdown} 
+                                onOpenChange={(open) => {
+                                  if (!open) updateRow(row.localId, "showDropdown", false)
+                                }}
+                              >
+                                <PopoverTrigger render={<div className="relative flex-1 w-full" />} nativeButton={false}>
                                   <input
                                     type="text"
                                     placeholder={copy.partSearchPlaceholder}
@@ -314,45 +345,59 @@ export function IncomeStockFormDialog({
                                     }}
                                     onFocus={() => updateRow(row.localId, "showDropdown", true)}
                                   />
-                                </div>
-                              </PopoverTrigger>
-                              <PopoverContent 
-                                align="start" 
-                                className="w-[300px] p-1 max-h-48 overflow-y-auto"
-                                initialFocus={false}
+                                </PopoverTrigger>
+                                <PopoverContent 
+                                  align="start" 
+                                  className="w-[300px] p-1 max-h-48 overflow-y-auto flex flex-col"
+                                  initialFocus={false}
+                                >
+                                  <div className="flex-1 overflow-y-auto">
+                                    {catalogParts
+                                      .filter(
+                                        (part) =>
+                                          part.partName
+                                            .toLowerCase()
+                                            .includes(row.partSearchText.toLowerCase()) ||
+                                          part.partNumber
+                                            .toLowerCase()
+                                            .includes(row.partSearchText.toLowerCase())
+                                      )
+                                      .map((part) => (
+                                        <button
+                                          type="button"
+                                          key={part.id}
+                                          className="flex w-full flex-col px-3 py-1.5 text-left text-xs transition hover:bg-muted rounded-md"
+                                          onClick={() => {
+                                            updateRow(row.localId, "partId", String(part.id))
+                                            updateRow(row.localId, "showDropdown", false)
+                                            updateRow(row.localId, "quantity", Number(part.quantity))
+                                            // prefill catalog price as a good default for cost
+                                            updateRow(row.localId, "unitCost", Number(part.price) * 0.7) // estimate buying cost as 70% of sale price
+                                          }}
+                                        >
+                                          <span className="font-semibold text-foreground">
+                                            {part.partName}
+                                          </span>
+                                          <span className="text-[10px] text-muted-foreground">
+                                            No: {part.partNumber} | Current Stock: {part.quantity}
+                                          </span>
+                                        </button>
+                                      ))}
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                className="h-9 px-2.5 rounded-lg border-orange-500/30 hover:bg-orange-500/10 text-orange-600 hover:text-orange-700 shrink-0 font-medium text-xs"
+                                onClick={() => {
+                                  setActiveNewPartRowLocalId(row.localId)
+                                  updateRow(row.localId, "showDropdown", false)
+                                }}
                               >
-                                {catalogParts
-                                  .filter(
-                                    (part) =>
-                                      part.partName
-                                        .toLowerCase()
-                                        .includes(row.partSearchText.toLowerCase()) ||
-                                      part.partNumber
-                                        .toLowerCase()
-                                        .includes(row.partSearchText.toLowerCase())
-                                  )
-                                  .map((part) => (
-                                    <button
-                                      type="button"
-                                      key={part.id}
-                                      className="flex w-full flex-col px-3 py-1.5 text-left text-xs transition hover:bg-muted rounded-md"
-                                      onClick={() => {
-                                        updateRow(row.localId, "partId", String(part.id))
-                                        updateRow(row.localId, "showDropdown", false)
-                                        // prefill catalog price as a good default for cost
-                                        updateRow(row.localId, "unitCost", Number(part.price) * 0.7) // estimate buying cost as 70% of sale price
-                                      }}
-                                    >
-                                      <span className="font-semibold text-foreground">
-                                        {part.partName}
-                                      </span>
-                                      <span className="text-[10px] text-muted-foreground">
-                                        No: {part.partNumber} | Current Stock: {part.quantity}
-                                      </span>
-                                    </button>
-                                  ))}
-                              </PopoverContent>
-                            </Popover>
+                                {copy.newPartLabel}
+                              </Button>
+                            </div>
                           )}
 
                           {/* Similarity Alerting Feature */}
@@ -387,6 +432,7 @@ export function IncomeStockFormDialog({
                                             onClick={() => {
                                               updateRow(row.localId, "partId", String(p.id))
                                               updateRow(row.localId, "showDropdown", false)
+                                              updateRow(row.localId, "quantity", Number(p.quantity))
                                               updateRow(row.localId, "unitCost", Number(p.price) * 0.7)
                                             }}
                                           >
@@ -444,13 +490,14 @@ export function IncomeStockFormDialog({
               </TableBody>
             </Table>
           </div>
+        </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <Button
               type="button"
               variant="outline"
               size="sm"
-              className="rounded-xl border-dashed"
+              className="rounded-xl border-dashed text-left w-auto!"
               onClick={addRow}
               disabled={isSubmitting}
             >
@@ -465,7 +512,7 @@ export function IncomeStockFormDialog({
             </div>
           </div>
 
-          <DialogFooter className="border-t border-border pt-4">
+          <DialogFooter className="flex w-full flex-row items-center justify-end border-t border-border pt-4">
             <Button
               type="button"
               variant="outline"
@@ -482,5 +529,29 @@ export function IncomeStockFormDialog({
         </form>
       </DialogContent>
     </Dialog>
+
+    {activeNewPartRowLocalId ? (
+      <ProductFormDialog
+        mode="add"
+        copy={productDialogCopy[locale]}
+        categories={categories}
+        onClose={() => setActiveNewPartRowLocalId(null)}
+        onSubmit={async (values, imageFile) => {
+          try {
+            const createdPart = await createPart(mapFormValuesToRequest(values, imageFile))
+            setCatalogParts((prev) => [...prev, createdPart])
+            updateRow(activeNewPartRowLocalId, "partId", String(createdPart.id))
+            updateRow(activeNewPartRowLocalId, "partSearchText", createdPart.partName)
+            updateRow(activeNewPartRowLocalId, "quantity", Number(createdPart.quantity))
+            updateRow(activeNewPartRowLocalId, "unitCost", Number(createdPart.price) * 0.7)
+            setActiveNewPartRowLocalId(null)
+            toast.success(productDialogCopy[locale].createSuccess(values.partName))
+          } catch (err) {
+            toast.error(getApiErrorMessage(err))
+          }
+        }}
+      />
+    ) : null}
+    </>
   )
 }

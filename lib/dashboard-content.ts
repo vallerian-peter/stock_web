@@ -44,6 +44,9 @@ export const dashboardContent: Record<
       account: string
       profile: string
       signOut: string
+      signOutConfirmTitle: string
+      signOutConfirmDescription: string
+      cancel: string
       notifications: string
       language: string
       openSidebar: string
@@ -115,6 +118,9 @@ export const dashboardContent: Record<
       account: "Account",
       profile: "My profile",
       signOut: "Sign out",
+      signOutConfirmTitle: "Sign Out",
+      signOutConfirmDescription: "Are you sure you want to sign out of your account?",
+      cancel: "Cancel",
       notifications: "Alerts",
       language: "Language",
       openSidebar: "Open sidebar",
@@ -459,6 +465,9 @@ export const dashboardContent: Record<
       account: "Akaunti",
       profile: "Wasifu wangu",
       signOut: "Toka",
+      signOutConfirmTitle: "Toka",
+      signOutConfirmDescription: "Je, una uhakika unataka kutoka kwenye akaunti yako?",
+      cancel: "Ghairi",
       notifications: "Tahadhari",
       language: "Lugha",
       openSidebar: "Fungua menyu ya pembeni",

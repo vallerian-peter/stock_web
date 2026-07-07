@@ -7,6 +7,9 @@ import { toast } from "sonner"
 import { getParts } from "@/api/parts_api"
 import { getApiErrorMessage } from "@/lib/api/request"
 import { Button } from "@/components/ui/button"
+import { useLandingLocale } from "@/components/landing-locale-provider"
+import { SalesFormDialog } from "@/app/dashboard/sales/components/sales-form-dialog"
+import { salesDialogCopy } from "@/app/dashboard/sales/components/sales-dialog-copy"
 import {
   Dialog,
   DialogContent,
@@ -38,7 +41,7 @@ import { Spinner } from "@/components/ui/spinner"
 type OutgoingFormDialogProps = {
   copy: OutgoingDialogCopy
   onClose: () => void
-  onSubmit: (values: any) => Promise<void> | void
+  onSubmit: (values: Record<string, unknown>) => Promise<void> | void
 }
 
 interface OutgoingInlineRow {
@@ -55,9 +58,13 @@ export function OutgoingFormDialog({
   onClose,
   onSubmit,
 }: OutgoingFormDialogProps) {
+  const { locale } = useLandingLocale()
+  const [showSaleDialog, setShowSaleDialog] = useState(false)
+  const [isSaleLinked, setIsSaleLinked] = useState(false)
+
   const [dispatchNumber, setDispatchNumber] = useState("")
   const [recipientName, setRecipientName] = useState("")
-  const [purpose, setPurpose] = useState("SALE") // Default to SALE
+  const [purpose, setPurpose] = useState("TECHNICIAN") // Default to TECHNICIAN
   const [dispatchedAt, setDispatchedAt] = useState(() => {
     const now = new Date()
     now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
@@ -82,20 +89,15 @@ export function OutgoingFormDialog({
   const [amountPaid, setAmountPaid] = useState<number | "">("")
 
   const [catalogParts, setCatalogParts] = useState<PartResponseDTO[]>([])
-  const [isLoadingParts, setIsLoadingParts] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Fetch Parts Catalog on mount
   useEffect(() => {
     async function loadCatalog() {
       try {
-        setIsLoadingParts(true)
         const res = await getParts({ page: 1, perPage: 250 })
         setCatalogParts(res.data)
       } catch (err) {
         toast.error(getApiErrorMessage(err))
-      } finally {
-        setIsLoadingParts(false)
       }
     }
     void loadCatalog()
@@ -146,6 +148,11 @@ export function OutgoingFormDialog({
       return
     }
 
+    if (isSale && !isSaleLinked) {
+      toast.error(copy.saleRequiredError)
+      return
+    }
+
     if (!dispatchedAt) {
       toast.error(copy.validation.dispatchedAtRequired)
       return
@@ -182,7 +189,7 @@ export function OutgoingFormDialog({
       }
     }
 
-    const payload: any = {
+    const payload: Record<string, unknown> = {
       dispatchNumber: dispatchNumber.trim() || undefined,
       recipientName: isSale ? (customerName.trim() || recipientName.trim()) : recipientName.trim(),
       purpose,
@@ -210,8 +217,9 @@ export function OutgoingFormDialog({
   }
 
   return (
-    <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="w-full max-w-5xl max-h-[92vh] overflow-y-auto rounded-2xl border border-border bg-card p-6 shadow-xl sm:max-w-5xl">
+    <>
+      <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="w-[95vw] sm:w-full sm:max-w-2xl md:max-w-4xl lg:max-w-6xl xl:max-w-7xl max-h-[92vh] overflow-y-auto rounded-2xl border border-border bg-card p-4 sm:p-6 shadow-xl">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold text-foreground">
             {copy.addTitle}
@@ -221,9 +229,9 @@ export function OutgoingFormDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="mt-4 space-y-6" noValidate>
-          {/* Header Metadata fields */}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <form onSubmit={handleSubmit} className="mt-4 min-w-0 w-full space-y-6" noValidate>
+          {/* Header Metadata fields — stack on mobile, expand at breakpoints */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Field>
               <FieldLabel>{copy.purpose}</FieldLabel>
               <Select value={purpose} onValueChange={(val) => val && setPurpose(val)}>
@@ -231,18 +239,18 @@ export function OutgoingFormDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="SALE">SALE</SelectItem>
-                  <SelectItem value="TECHNICIAN">TECHNICIAN</SelectItem>
-                  <SelectItem value="DAMAGED">DAMAGED GOODS</SelectItem>
-                  <SelectItem value="RETURN">RETURN TO SUPPLIER</SelectItem>
-                  <SelectItem value="TRANSFER">BRANCH TRANSFER</SelectItem>
+                  <SelectItem value="SALE">{copy.purposeSale}</SelectItem>
+                  <SelectItem value="TECHNICIAN">{copy.purposeTechnician}</SelectItem>
+                  <SelectItem value="DAMAGED">{copy.purposeDamaged}</SelectItem>
+                  <SelectItem value="RETURN">{copy.purposeReturn}</SelectItem>
+                  <SelectItem value="TRANSFER">{copy.purposeTransfer}</SelectItem>
                 </SelectContent>
               </Select>
             </Field>
 
             <InputField
               labelText={isSale ? copy.customerName : copy.recipientName}
-              placeholder={isSale ? "Customer Name" : copy.recipientPlaceholder}
+              placeholder={isSale ? copy.customerName : copy.recipientPlaceholder}
               value={isSale ? customerName : recipientName}
               disabled={isSubmitting}
               onChange={(e) => {
@@ -271,48 +279,74 @@ export function OutgoingFormDialog({
 
           {/* Conditional Linked Sale Fields */}
           {isSale && (
-            <div className="rounded-xl border border-green-500/20 bg-green-500/5 p-4 space-y-4">
-              <h3 className="text-sm font-semibold text-green-800 dark:text-green-300">
+            <div className="rounded-xl border border-dashed border-orange-500/30 bg-orange-500/5 p-4 space-y-4">
+              <h3 className="text-sm font-semibold text-orange-800 dark:text-orange-300">
                 {copy.saleTitle}
               </h3>
-              <div className="grid gap-4 sm:grid-cols-3">
-                <Field>
-                  <FieldLabel>{copy.paymentStatus}</FieldLabel>
-                  <Select value={paymentStatus} onValueChange={(val) => val && setPaymentStatus(val)}>
-                    <SelectTrigger className="h-9 w-full rounded-xl bg-background border-border">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="PAID">PAID</SelectItem>
-                      <SelectItem value="PENDING">PENDING</SelectItem>
-                      <SelectItem value="PARTIAL">PARTIAL</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </Field>
+              <p className="text-xs text-muted-foreground">
+                {isSaleLinked ? copy.saleLinkedSuccess : copy.saleLinkInstructions}
+              </p>
 
-                <Field>
-                  <FieldLabel>{copy.paymentMethod}</FieldLabel>
-                  <Select value={paymentMethod} onValueChange={(val) => val && setPaymentMethod(val)}>
-                    <SelectTrigger className="h-9 w-full rounded-xl bg-background border-border">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="CASH">CASH</SelectItem>
-                      <SelectItem value="M-PESA">M-PESA</SelectItem>
-                      <SelectItem value="BANK">BANK TRANSFER</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </Field>
-
-                <InputField
-                  type="number"
-                  labelText={copy.amountPaid}
-                  placeholder={`Default: TZS ${grandTotal.toLocaleString()}`}
-                  value={amountPaid}
-                  disabled={isSubmitting}
-                  onChange={(e) => setAmountPaid(e.target.value ? Number(e.target.value) : "")}
-                />
-              </div>
+              {isSaleLinked ? (
+                <div className="rounded-lg border border-green-500/20 bg-green-500/10 p-3 text-xs space-y-2">
+                  <div className="flex flex-wrap gap-x-6 gap-y-1 font-medium text-foreground">
+                    <span>
+                      <strong>{copy.customerName}:</strong> {customerName || "Walk-in Customer"}
+                    </span>
+                    <span>
+                      <strong>{copy.paymentStatus}:</strong> {paymentStatus}
+                    </span>
+                    <span>
+                      <strong>{copy.paymentMethod}:</strong> {paymentMethod}
+                    </span>
+                    <span>
+                      <strong>{copy.amountPaid}:</strong> TZS {Number(amountPaid || grandTotal).toLocaleString()}
+                    </span>
+                  </div>
+                  {notes && (
+                    <div className="text-[11px] text-muted-foreground border-t border-green-500/10 pt-1.5 mt-1.5 font-normal">
+                      <strong>{copy.notes}:</strong> {notes}
+                    </div>
+                  )}
+                  <div className="flex gap-2 mt-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 rounded-lg text-red-500 hover:bg-red-500/10 hover:text-red-600 font-medium"
+                      onClick={() => {
+                        setIsSaleLinked(false)
+                        setItems([
+                          {
+                            localId: "initial-row",
+                            partId: "",
+                            partSearchText: "",
+                            quantity: 1,
+                            unitPrice: 0,
+                            showDropdown: false,
+                          },
+                        ])
+                        setCustomerName("")
+                        setPaymentStatus("PAID")
+                        setPaymentMethod("CASH")
+                        setAmountPaid("")
+                      }}
+                    >
+                      {copy.changeBtn} (Unlink)
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full border-dashed border-orange-500 text-orange-600 hover:bg-orange-500/10 rounded-xl py-5 font-semibold"
+                  onClick={() => setShowSaleDialog(true)}
+                >
+                  <PlusIcon className="size-4 mr-2" />
+                  {copy.createSaleRecordBtn}
+                </Button>
+              )}
             </div>
           )}
 
@@ -327,16 +361,17 @@ export function OutgoingFormDialog({
             />
           </Field>
 
-          {/* Inline Batch Input Table */}
-          <div className="rounded-xl border border-border bg-background/50 overflow-hidden [&_[data-slot=table-container]]:max-h-[320px] [&_[data-slot=table-container]]:overflow-y-auto">
-            <Table className="w-full min-w-[700px]">
-              <TableHeader className="bg-muted/40 sticky top-0 z-10 shadow-sm">
+          {/* Inline Batch Input Table — self-contained card, scrolls internally on small screens */}
+          <div className="w-full min-w-0 rounded-xl border border-border bg-background/50 overflow-hidden">
+            <div className="w-full overflow-x-auto [&_[data-slot=table-container]]:max-h-[320px] [&_[data-slot=table-container]]:overflow-y-auto">
+              <Table className="w-full min-w-[700px]">
+                <TableHeader className="bg-muted/40 sticky top-0 z-10 shadow-sm">
                 <TableRow>
                   <TableHead className="w-10">#</TableHead>
                   <TableHead className="min-w-[280px]">{copy.partSearchPlaceholder}</TableHead>
                   <TableHead className="w-24 text-right">{copy.qtyLabel}</TableHead>
                   {isSale && <TableHead className="w-32 text-right">{copy.salePriceLabel}</TableHead>}
-                  {isSale && <TableHead className="w-36 text-right">Subtotal</TableHead>}
+                  {isSale && <TableHead className="w-36 text-right">{salesDialogCopy[locale].subtotalLabel}</TableHead>}
                   <TableHead className="w-12"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -371,7 +406,7 @@ export function OutgoingFormDialog({
                                   updateRow(row.localId, "partSearchText", "")
                                 }}
                               >
-                                Change
+                                {copy.changeBtn}
                               </Button>
                             </div>
                           ) : (
@@ -440,8 +475,8 @@ export function OutgoingFormDialog({
                           type="number"
                           min="1"
                           required
-                          disabled={isSubmitting}
-                          className="h-9 w-full rounded-lg border border-border bg-background px-2.5 text-right text-xs focus:border-orange-500 focus:outline-hidden"
+                          disabled={isSubmitting || isSale}
+                          className="h-9 w-full rounded-lg border border-border bg-background px-2.5 text-right text-xs focus:border-orange-500 focus:outline-hidden disabled:opacity-80 disabled:cursor-not-allowed"
                           value={row.quantity}
                           onChange={(e) => updateRow(row.localId, "quantity", Number(e.target.value))}
                         />
@@ -452,8 +487,8 @@ export function OutgoingFormDialog({
                             type="number"
                             min="0"
                             required
-                            disabled={isSubmitting}
-                            className="h-9 w-full rounded-lg border border-border bg-background px-2.5 text-right text-xs focus:border-orange-500 focus:outline-hidden"
+                            disabled={isSubmitting || isSale}
+                            className="h-9 w-full rounded-lg border border-border bg-background px-2.5 text-right text-xs focus:border-orange-500 focus:outline-hidden disabled:opacity-80 disabled:cursor-not-allowed"
                             value={row.unitPrice}
                             onChange={(e) => updateRow(row.localId, "unitPrice", Number(e.target.value))}
                           />
@@ -465,15 +500,17 @@ export function OutgoingFormDialog({
                         </TableCell>
                       )}
                       <TableCell className="text-center">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="size-8 rounded-lg text-muted-foreground hover:bg-red-500/10 hover:text-red-600"
-                          onClick={() => removeRow(row.localId)}
-                        >
-                          <Trash2Icon className="size-4" />
-                        </Button>
+                        {!isSale && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="size-8 rounded-lg text-muted-foreground hover:bg-red-500/10 hover:text-red-600"
+                            onClick={() => removeRow(row.localId)}
+                          >
+                            <Trash2Icon className="size-4" />
+                          </Button>
+                        )}
                       </TableCell>
                     </TableRow>
                   )
@@ -481,13 +518,14 @@ export function OutgoingFormDialog({
               </TableBody>
             </Table>
           </div>
+        </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <Button
               type="button"
               variant="outline"
               size="sm"
-              className="rounded-xl border-dashed"
+              className="rounded-xl border-dashed text-left w-auto!"
               onClick={addRow}
               disabled={isSubmitting}
             >
@@ -504,7 +542,7 @@ export function OutgoingFormDialog({
             )}
           </div>
 
-          <DialogFooter className="border-t border-border pt-4">
+          <DialogFooter className="flex w-full flex-row items-center justify-end border-t border-border pt-4">
             <Button
               type="button"
               variant="outline"
@@ -521,5 +559,44 @@ export function OutgoingFormDialog({
         </form>
       </DialogContent>
     </Dialog>
+
+    {showSaleDialog ? (
+      <SalesFormDialog
+        copy={salesDialogCopy[locale]}
+        onClose={() => setShowSaleDialog(false)}
+        onSubmit={(saleValues) => {
+          // Auto link it!
+          // 1. Map saleValues.items to parent items
+          const mappedItems = (saleValues.items as Array<{ partId: number; quantity: number; unitPrice: number }>).map((item) => {
+            const catalogItem = catalogParts.find((p) => p.id === item.partId)
+            return {
+              localId: Math.random().toString(36).substring(7),
+              partId: String(item.partId),
+              partSearchText: catalogItem ? catalogItem.partName : "",
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+              showDropdown: false,
+            };
+          })
+          setItems(mappedItems)
+
+          // 2. Set sale fields
+          setCustomerName(saleValues.customerName || "")
+          setPaymentStatus(saleValues.paymentStatus || "PAID")
+          setPaymentMethod(saleValues.paymentMethod || "CASH")
+          setAmountPaid(saleValues.amountPaid)
+          if (saleValues.saleNumber) {
+            setDispatchNumber(saleValues.saleNumber)
+          }
+          if (saleValues.notes) {
+            setNotes(saleValues.notes)
+          }
+          setIsSaleLinked(true)
+          setShowSaleDialog(false)
+          toast.success(copy.saleLinkedSuccess)
+        }}
+      />
+    ) : null}
+    </>
   )
 }

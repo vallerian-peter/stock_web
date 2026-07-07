@@ -26,18 +26,20 @@ export default function LoginPage() {
     password: "",
   })
 
+  const redirectTo = typeof window !== "undefined"
+    ? new URLSearchParams(window.location.search).get("redirectTo")
+    : null
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setIsSubmitting(true)
 
     try {
-      const authResponse = await login(formValues)
+      await login(formValues)
       toast.success(copy.submit)
-      router.push(
-        authResponse.user.role?.toString().trim().toUpperCase() === "USER"
-          ? "/dashboard"
-          : "/dashboard"
-      )
+      
+      const targetUrl = redirectTo && redirectTo.startsWith("/") ? redirectTo : "/dashboard"
+      router.push(targetUrl)
       router.refresh()
     } catch (error) {
       toast.error(getApiErrorMessage(error))

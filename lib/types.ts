@@ -58,6 +58,7 @@ export type ActiveCategoryDialog =
 
 export type ActivePartDialog =
   | { type: "add" }
+  | { type: "bulk-add" }
   | { type: "edit"; part: PartResponseDTO }
   | { type: "view"; part: PartResponseDTO }
   | null

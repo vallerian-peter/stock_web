@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import {
   ArrowDownToLineIcon,
   ArrowUpFromLineIcon,
@@ -24,6 +24,7 @@ import {
   Users2Icon,
   User2Icon,
   BellIcon,
+  MenuIcon,
 } from "lucide-react"
 
 import { useLandingLocale } from "@/components/landing-locale-provider"
@@ -36,6 +37,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useConfirmAlertDialog } from "@/components/confirm-alert-dialog-provider"
+import { logout } from "@/api/auth_api"
 import {
   Sidebar,
   SidebarContent,
@@ -171,6 +174,25 @@ function AccountMenu({
 }) {
   const { locale } = useLandingLocale()
   const copy = dashboardContent[locale]
+  const confirm = useConfirmAlertDialog()
+  const router = useRouter()
+
+  const handleSignOut = async () => {
+    const isConfirmed = await confirm({
+      title: copy.shell.signOutConfirmTitle,
+      description: copy.shell.signOutConfirmDescription,
+      confirmLabel: copy.shell.signOut,
+      cancelLabel: copy.shell.cancel,
+      variant: "destructive",
+    })
+
+    if (!isConfirmed) {
+      return
+    }
+
+    await logout()
+    router.push("/auth/login")
+  }
 
   return (
     <DropdownMenu>
@@ -224,6 +246,7 @@ function AccountMenu({
         <DropdownMenuItem
           variant="destructive"
           className="gap-2 rounded-xl px-3 py-2 text-[12px]"
+          onClick={() => setTimeout(handleSignOut, 80)}
         >
           <LogOutIcon />
           {copy.shell.signOut}
@@ -401,12 +424,15 @@ function DashboardTopBar({ user }: { user: DashboardUser }) {
                 : copy.shell.collapseSidebar
           }
         >
-          <PanelLeftIcon
-            className={cn(
-              "transition-transform",
-              !isMobile && state === "collapsed" && "rotate-180"
-            )}
-          />
+          {isMobile 
+            ? <MenuIcon /> 
+            : <PanelLeftIcon
+                className={cn(
+                "transition-transform",
+                !isMobile && state === "collapsed" && "rotate-180"
+              )}
+            /> 
+          }
         </Button>
 
         <div className="flex items-center gap-2 sm:gap-3">

@@ -41,6 +41,13 @@ export const salesDialogCopy = {
       paymentStatusRequired: "Select payment status.",
       paymentMethodRequired: "Select payment method.",
     },
+    changeBtn: "Change",
+    statusPaid: "Paid",
+    statusPending: "Pending",
+    statusPartial: "Partial",
+    methodCash: "Cash",
+    methodMobileMoney: "Mobile Money",
+    methodBankTransfer: "Bank Transfer",
   },
   sw: {
     addTitle: "Sajili mauzo ya kaunta",
@@ -82,6 +89,13 @@ export const salesDialogCopy = {
       paymentStatusRequired: "Chagua hali ya malipo.",
       paymentMethodRequired: "Chagua njia ya malipo.",
     },
+    changeBtn: "Badilisha",
+    statusPaid: "Imelipwa",
+    statusPending: "Inasubiri",
+    statusPartial: "Sehemu",
+    methodCash: "Taslimu",
+    methodMobileMoney: "Pesa ya Simu",
+    methodBankTransfer: "Uhamisho wa Benki",
   },
 } as const satisfies Record<LandingLocale, unknown>
 

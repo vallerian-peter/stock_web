@@ -85,7 +85,10 @@ function AlertDialogFooter({
     <div
       data-slot="alert-dialog-footer"
       className={cn(
-        "flex flex-col-reverse gap-2 group-data-[size=sm]/alert-dialog-content:grid group-data-[size=sm]/alert-dialog-content:grid-cols-2 sm:flex-row sm:justify-end",
+        // Always a row — never stack on mobile.
+        // With 2 children the grid makes each take exactly 50%.
+        // With 1 child justify-end keeps it pinned right.
+        "grid grid-flow-col auto-cols-fr gap-2 justify-end",
         className
       )}
       {...props}

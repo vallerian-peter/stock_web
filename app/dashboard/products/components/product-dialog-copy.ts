@@ -42,6 +42,11 @@ export const productDialogCopy = {
     deleteSuccess: (name: string) => `${name} was deleted.`,
     bulkDeleteSuccess: (count: number) =>
       `${count} selected parts were deleted.`,
+    bulkAddTitle: "Add parts in bulk",
+    bulkAddDescription: "Create multiple part records for inventory tracking in one go.",
+    bulkCreate: "Create parts",
+    bulkSuccess: (count: number) => `Successfully created ${count} parts.`,
+    addRow: "Add product",
     validation: {
       partNameRequired: "Enter the part name.",
       partNameLength: "Part name must be at least 2 characters.",
@@ -95,6 +100,11 @@ export const productDialogCopy = {
     deleteSuccess: (name: string) => `${name} imefutwa.`,
     bulkDeleteSuccess: (count: number) =>
       `Spea ${count} zilizochaguliwa zimefutwa.`,
+    bulkAddTitle: "Ongeza spea kwa pamoja",
+    bulkAddDescription: "Sajili spea/bidhaa nyingi kwa mara moja kwenye stoo.",
+    bulkCreate: "Sajili spea",
+    bulkSuccess: (count: number) => `Imefanikiwa kusajili spea ${count}.`,
+    addRow: "Ongeza bidhaa",
     validation: {
       partNameRequired: "Weka jina la spea.",
       partNameLength: "Jina la spea liwe na angalau herufi 2.",

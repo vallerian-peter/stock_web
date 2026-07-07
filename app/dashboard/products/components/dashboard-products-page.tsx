@@ -5,8 +5,8 @@ import {
   CircleAlertIcon,
   Layers3Icon,
   Package2Icon,
-  PlusIcon,
   TriangleAlertIcon,
+  MoreVerticalIcon,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -22,6 +22,12 @@ import {
   EmptyDescription,
   EmptyTitle,
 } from "@/components/ui/empty"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import type { PartRequestDTO, PartResponseDTO } from "@/lib/dtos/part_dtos"
 import { landingContent } from "@/lib/landing-content"
 import type { ActivePartDialog } from "@/lib/types"
@@ -31,6 +37,7 @@ import { DashboardProductsPagination } from "./dashboard-products-pagination"
 import { DashboardProductsTable } from "./dashboard-products-table"
 import { DashboardProductsToolbar } from "./dashboard-products-toolbar"
 import { ProductFormDialog } from "./product-form-dialog"
+import { ProductBulkFormDialog } from "./product-bulk-form-dialog"
 import type { ProductFormValues } from "./product-schema"
 import { ProductViewDialog } from "./product-view-dialog"
 import { useDashboardPartsState } from "./use-dashboard-products-state"
@@ -150,6 +157,20 @@ export function DashboardPartsPage() {
     toast.success(dialogCopy.createSuccess(values.partName))
   }
 
+  async function handleBulkCreateParts(
+    items: Array<{ values: ProductFormValues; imageFile: File | null }>
+  ) {
+    const createdParts = await Promise.all(
+      items.map((item) =>
+        createPart(mapFormValuesToRequest(item.values, item.imageFile))
+      )
+    )
+
+    createdParts.forEach((part) => prependPart(part))
+    setActiveDialog(null)
+    toast.success(dialogCopy.bulkSuccess(items.length))
+  }
+
   async function handleUpdatePart(
     partId: number,
     values: ProductFormValues,
@@ -170,10 +191,28 @@ export function DashboardPartsPage() {
     <>
       <DashboardPage
         actions={
-          <Button onClick={() => setActiveDialog({ type: "add" })}>
-            <PlusIcon data-icon="inline-start" />
-            {copy.addPart}
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button type="button" aria-label={copy.addPart}>
+                  <MoreVerticalIcon data-icon="inline-start" />
+                  {copy.addPart}
+                </Button>
+              }
+            />
+            <DropdownMenuContent align="end" className="w-48 rounded-xl">
+              <DropdownMenuItem
+                onClick={() => setActiveDialog({ type: "add" })}
+              >
+                {locale === "sw" ? "Bidhaa Moja" : "Single Product"}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setActiveDialog({ type: "bulk-add" })}
+              >
+                {locale === "sw" ? "Bidhaa kwa Pamoja" : "Bulk Products"}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         }
       >
         <section className="flex flex-col gap-4">
@@ -330,6 +369,15 @@ export function DashboardPartsPage() {
           categories={categories}
           onClose={() => setActiveDialog(null)}
           onSubmit={handleCreatePart}
+        />
+      ) : null}
+
+      {activeDialog?.type === "bulk-add" ? (
+        <ProductBulkFormDialog
+          copy={dialogCopy}
+          categories={categories}
+          onClose={() => setActiveDialog(null)}
+          onSubmit={handleBulkCreateParts}
         />
       ) : null}
 

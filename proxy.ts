@@ -11,7 +11,10 @@ export function proxy(request: NextRequest) {
   const token = request.cookies.get(ACCESS_TOKEN_COOKIE)?.value
 
   if (!token) {
-    return NextResponse.redirect(new URL("/auth/login", request.url))
+    const currentPath = request.nextUrl.pathname + request.nextUrl.search
+    const loginUrl = new URL("/auth/login", request.url)
+    loginUrl.searchParams.set("redirectTo", currentPath)
+    return NextResponse.redirect(loginUrl)
   }
 
   const role = normalizeDashboardRole(

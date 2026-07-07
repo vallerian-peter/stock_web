@@ -36,13 +36,17 @@ export async function login(payload: AuthRequestDTO): Promise<AuthResponseDTO> {
 }
 
 export async function logout() {
-  const response = await apiRequest<{ message: string }>({
-    endpoint: "/logout",
-    methodType: methodType.POST,
-  })
-
-  clearAccessToken()
-  clearAuthSession()
-
-  return response
+  try {
+    const response = await apiRequest<{ message: string }>({
+      endpoint: "/logout",
+      methodType: methodType.POST,
+    })
+    return response
+  } catch (error) {
+    // If the session has already expired on backend (401), we still want to log out client-side.
+    console.warn("Server-side logout failed, proceeding with client-side cleanup:", error)
+  } finally {
+    clearAccessToken()
+    clearAuthSession()
+  }
 }

@@ -188,7 +188,7 @@ export function DashboardUsersPage() {
               />
             </CardHeader>
 
-            <CardContent>
+            <CardContent className="pb-5">
               {isLoading ? (
                 <Card>
                   <Empty className="flex min-h-64 flex-col gap-3">

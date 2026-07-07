@@ -51,6 +51,14 @@ apiClient.interceptors.request.use((config) => {
 
   headers.set("Accept-Language", locale)
   headers.set("X-Locale", locale)
+
+  // When sending FormData the browser must set Content-Type itself
+  // (it needs to include the multipart boundary). Remove any JSON
+  // default so it is never re-added after apiRequest deletes it.
+  if (typeof FormData !== "undefined" && config.data instanceof FormData) {
+    headers.delete("Content-Type")
+  }
+
   config.headers = headers
 
   return config

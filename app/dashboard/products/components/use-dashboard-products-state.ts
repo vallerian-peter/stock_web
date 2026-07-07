@@ -194,6 +194,23 @@ export function useDashboardPartsState(locale: LandingLocale) {
       })
   }, [locale, searchQuery, sortDirection, statusFilter, tableParts])
 
+  const stats = useMemo(() => {
+    let totalParts = 0
+    let inStock = 0
+    let lowStock = 0
+    let outOfStock = 0
+
+    tableParts.forEach((part) => {
+      totalParts += part.quantity
+
+      if (part.status === "in_stock") inStock++
+      else if (part.status === "low_stock") lowStock++
+      else if (part.status === "out_of_stock") outOfStock++
+    })
+
+    return { totalParts, inStock, lowStock, outOfStock }
+  }, [tableParts])
+
   const totalPages = Math.max(1, Math.ceil(filteredParts.length / pageSize))
   const safeCurrentPage = Math.min(currentPage, totalPages)
   const pageStartIndex = (safeCurrentPage - 1) * pageSize
@@ -341,5 +358,6 @@ export function useDashboardPartsState(locale: LandingLocale) {
     updateSortDirection,
     updateStatusFilter,
     visibleParts,
+    stats,
   }
 }

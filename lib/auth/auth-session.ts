@@ -80,27 +80,53 @@ export function clearAuthSession() {
   window.dispatchEvent(new Event(AUTH_SESSION_CHANGE_EVENT))
 }
 
+let cachedUser: DashboardUser | null = null
+let lastToken: string | null = null
+let lastRole: string | null = null
+let lastName: string | null = null
+let lastEmail: string | null = null
+
 export function getClientDashboardUser(): DashboardUser | null {
   const token = readCookie(ACCESS_TOKEN_COOKIE)
 
   if (!token) {
+    cachedUser = null
+    lastToken = null
+    lastRole = null
+    lastName = null
+    lastEmail = null
     return null
   }
 
   const role = normalizeDashboardRole(readCookie(DASHBOARD_ROLE_COOKIE))
+  const name =
+    readCookie(DASHBOARD_USER_NAME_COOKIE) ??
+    (role === "ADMIN" ? "Valler Admin" : "Valler User")
+  const email =
+    readCookie(DASHBOARD_USER_EMAIL_COOKIE) ??
+    (role === "ADMIN"
+      ? "admin@vallerparts.co.tz"
+      : "user@vallerparts.co.tz")
 
-  return {
-    name:
-      readCookie(DASHBOARD_USER_NAME_COOKIE) ??
-      (role === "ADMIN" ? "Valler Admin" : "Valler User"),
-    email:
-      readCookie(DASHBOARD_USER_EMAIL_COOKIE) ??
-      (role === "ADMIN"
-        ? "admin@vallerparts.co.tz"
-        : "user@vallerparts.co.tz"),
-    role,
+  if (
+    cachedUser &&
+    token === lastToken &&
+    role === lastRole &&
+    name === lastName &&
+    email === lastEmail
+  ) {
+    return cachedUser
   }
+
+  lastToken = token
+  lastRole = role
+  lastName = name
+  lastEmail = email
+  cachedUser = { name, email, role }
+
+  return cachedUser
 }
+
 
 export function subscribeToAuthSession(onStoreChange: () => void) {
   if (typeof window === "undefined") {

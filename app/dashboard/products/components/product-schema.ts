@@ -32,7 +32,7 @@ export function createProductSchema(messages: ProductDialogCopy["validation"]) {
 
 export type ProductFormValues = z.infer<ReturnType<typeof createProductSchema>>
 
-export type ProductFormErrors = Partial<Record<keyof ProductFormValues, string>>
+export type ProductFormErrors = Partial<Record<keyof ProductFormValues | "image", string>>
 
 export function getProductFormErrors(
   error: z.ZodError<ProductFormValues>

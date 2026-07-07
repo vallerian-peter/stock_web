@@ -35,6 +35,7 @@ import {
   type ProductFormMode,
   type ProductFormValues,
 } from "./product-schema"
+import { Spinner } from "@/components/ui/spinner"
 
 type ProductFormDialogProps = {
   mode: ProductFormMode
@@ -104,8 +105,12 @@ export function ProductFormDialog({
 
     const result = createProductSchema(copy.validation).safeParse(values)
 
-    if (!result.success) {
-      setErrors(getProductFormErrors(result.error))
+    if (!result.success || errors.image) {
+      const formErrors = result.success ? {} : getProductFormErrors(result.error)
+      setErrors({
+        ...formErrors,
+        image: errors.image,
+      })
       return
     }
 
@@ -191,7 +196,13 @@ export function ProductFormDialog({
                 }}
               >
                 <SelectTrigger className="h-9 w-full" disabled={isSubmitting}>
-                  <SelectValue />
+                  <SelectValue>
+                    {(value) => {
+                      if (value === "none") return copy.uncategorized
+                      const category = categories.find((c) => c.id.toString() === value)
+                      return category ? category.name : ""
+                    }}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">{copy.uncategorized}</SelectItem>
@@ -208,23 +219,50 @@ export function ProductFormDialog({
             </Field>
           </div>
 
-          <Field>
+          <Field data-invalid={Boolean(errors.image)}>
             <FieldLabel>{copy.image}</FieldLabel>
             <Input
               type="file"
               accept="image/*"
               disabled={isSubmitting}
               onChange={(event) => {
-                setImageFile(event.target.files?.[0] ?? null)
+                const file = event.target.files?.[0] ?? null
+                if (file) {
+                  const allowedTypes = [
+                    "image/jpeg",
+                    "image/jpg",
+                    "image/png",
+                    "image/gif",
+                    "image/webp",
+                    "image/bmp",
+                    "image/svg+xml",
+                  ]
+                  if (!allowedTypes.includes(file.type)) {
+                    setErrors((current) => ({
+                      ...current,
+                      image: copy.validation.imageInvalid,
+                    }))
+                    setImageFile(null)
+                    return
+                  }
+                  if (file.size > 5 * 1024 * 1024) {
+                    setErrors((current) => ({
+                      ...current,
+                      image: copy.validation.imageSize,
+                    }))
+                    setImageFile(null)
+                    return
+                  }
+                }
+                setErrors((current) => ({ ...current, image: undefined }))
+                setImageFile(file)
               }}
             />
             <p className="text-xs text-muted-foreground">{copy.imageHelper}</p>
+            <FieldError errors={[{ message: errors.image }]} />
             {previewUrl ? (
-              <div className="space-y-2">
-                <p className="text-xs font-medium text-muted-foreground">
-                  {copy.currentImage}
-                </p>
-                <div className="relative h-28 w-full overflow-hidden rounded-md border">
+              <div className="flex items-center gap-3 rounded-md border bg-muted/40 px-3 py-2">
+                <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md border">
                   <Image
                     src={previewUrl}
                     alt={values.partName || copy.partName}
@@ -232,6 +270,14 @@ export function ProductFormDialog({
                     unoptimized
                     className="object-cover"
                   />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium text-foreground truncate">
+                    {values.partName || copy.partName}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {copy.currentImage}
+                  </p>
                 </div>
               </div>
             ) : null}
@@ -256,12 +302,17 @@ export function ProductFormDialog({
                 aria-invalid={Boolean(errors.status)}
                 disabled={isSubmitting}
               >
-                <SelectValue />
+                <SelectValue>
+                  {(value) => {
+                    const v = value.replace('_', ' ');
+                    return v.toUpperCase();
+                  }}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="in_stock">{copy.inStock}</SelectItem>
-                <SelectItem value="low_stock">{copy.lowStock}</SelectItem>
-                <SelectItem value="out_of_stock">{copy.outOfStock}</SelectItem>
+                <SelectItem value="in_stock">{copy.inStock.toUpperCase()}</SelectItem>
+                <SelectItem value="low_stock">{copy.lowStock.toUpperCase()}</SelectItem>
+                <SelectItem value="out_of_stock">{copy.outOfStock.toUpperCase()}</SelectItem>
               </SelectContent>
             </Select>
             <FieldError errors={[{ message: errors.status }]} />
@@ -277,7 +328,7 @@ export function ProductFormDialog({
               {copy.cancel}
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isEditing ? copy.save : copy.create}
+              {isSubmitting ? <Spinner /> : (isEditing ? copy.save : copy.create)}
             </Button>
           </DialogFooter>
         </form>

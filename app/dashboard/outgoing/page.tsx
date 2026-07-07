@@ -1,5 +1,12 @@
-import { DashboardSectionPage } from "@/components/dashboard/dashboard-section-page"
+import { Suspense } from "react"
+
+import { DashboardOutgoingPage } from "@/app/dashboard/outgoing/components/dashboard-outgoing-page"
+import { DashboardOutgoingPageFallback } from "@/app/dashboard/outgoing/components/dashboard-outgoing-page-fallback"
 
 export default function OutgoingPage() {
-  return <DashboardSectionPage />
+  return (
+    <Suspense fallback={<DashboardOutgoingPageFallback />}>
+      <DashboardOutgoingPage />
+    </Suspense>
+  )
 }

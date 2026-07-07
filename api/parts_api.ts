@@ -40,7 +40,7 @@ export async function getParts({
   page = 1,
   perPage = 15,
 }: GetPartsOptions = {}) {
-  return apiRequest<PaginatedApiResponse<PartResponseDTO>>({
+  const response = await apiRequest<PaginatedApiResponse<PartResponseDTO>>({
     endpoint: "/parts",
     methodType: methodType.GET,
     params: {
@@ -48,6 +48,8 @@ export async function getParts({
       per_page: perPage,
     },
   })
+  console.log("[parts_api] getParts response:", response)
+  return response
 }
 
 export async function createPart(payload: PartRequestDTO) {
@@ -59,26 +61,35 @@ export async function createPart(payload: PartRequestDTO) {
     endpoint: "/parts",
     methodType: methodType.POST,
   })
-
-  return "data" in response ? response.data : response
+  console.log("[parts_api] createPart raw response:", response)
+  const result = "data" in response ? response.data : response
+  console.log("[parts_api] createPart resolved part:", result)
+  return result
 }
 
 export async function updatePart(partId: number, payload: UpdatePartRequestDTO) {
+  const formData = buildPartFormData(payload)
+  formData.set("_method", "PATCH")
+
   const response = await apiRequest<
     PartResponseDTO | { data: PartResponseDTO },
     FormData
   >({
-    data: buildPartFormData(payload),
+    data: formData,
     endpoint: `/parts/${partId}`,
-    methodType: methodType.PATCH,
+    methodType: methodType.POST,
   })
-
-  return "data" in response ? response.data : response
+  console.log("[parts_api] updatePart raw response:", response)
+  const result = "data" in response ? response.data : response
+  console.log("[parts_api] updatePart resolved part:", result)
+  return result
 }
 
 export async function deletePart(partId: number) {
-  return apiRequest<{ message: string }>({
+  const response = await apiRequest<{ message: string }>({
     endpoint: `/parts/${partId}`,
     methodType: methodType.DELETE,
   })
+  console.log("[parts_api] deletePart response:", response)
+  return response
 }

@@ -1,7 +1,13 @@
 "use client"
 
 import { useState } from "react"
-import { PlusIcon } from "lucide-react"
+import {
+  CircleAlertIcon,
+  Layers3Icon,
+  Package2Icon,
+  PlusIcon,
+  TriangleAlertIcon,
+} from "lucide-react"
 import { toast } from "sonner"
 
 import { createPart, deletePart, updatePart } from "@/api/parts_api"
@@ -92,6 +98,7 @@ export function DashboardPartsPage() {
     updateSortDirection,
     updateStatusFilter,
     visibleParts,
+    stats,
   } = useDashboardPartsState(locale)
 
   async function handleDeletePart(partPendingDelete: PartResponseDTO) {
@@ -169,7 +176,57 @@ export function DashboardPartsPage() {
           </Button>
         }
       >
-        <section>
+        <section className="flex flex-col gap-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              {
+                label: copy.totalParts,
+                value: stats.totalParts,
+                Icon: Package2Icon,
+                colorClass: "border-zinc-200/70 bg-zinc-50 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900",
+              },
+              {
+                label: copy.inStock,
+                value: stats.inStock,
+                Icon: Layers3Icon,
+                colorClass: "border-green-200/70 bg-green-50 text-green-600 dark:border-green-900 dark:bg-green-950/40",
+              },
+              {
+                label: copy.lowStock,
+                value: stats.lowStock,
+                Icon: TriangleAlertIcon,
+                colorClass: "border-amber-200/70 bg-amber-50 text-amber-600 dark:border-amber-900 dark:bg-amber-950/40",
+              },
+              {
+                label: copy.outOfStock,
+                value: stats.outOfStock,
+                Icon: CircleAlertIcon,
+                colorClass: "border-red-200/70 bg-red-50 text-red-600 dark:border-red-900 dark:bg-red-950/40",
+              },
+            ].map((item) => (
+              <Card
+                key={item.label}
+                className="justify-between gap-3 rounded-2xl border-border/60 bg-card/90 py-0 shadow-sm"
+              >
+                <CardHeader className="flex flex-row items-start justify-between px-5 pt-5 pb-0">
+                  <p className="text-[12px] font-medium text-muted-foreground">
+                    {item.label}
+                  </p>
+                  <span
+                    className={`flex size-9 shrink-0 items-center justify-center rounded-xl border ${item.colorClass}`}
+                  >
+                    <item.Icon className="size-4" />
+                  </span>
+                </CardHeader>
+                <CardContent className="px-5 pb-5">
+                  <p className="text-xl font-semibold tracking-tight text-foreground">
+                    {item.value}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
           <Card className="min-h-[auto_70vh] w-full rounded-lg border-border/60 bg-card/90 py-0 shadow-sm">
             <CardHeader className="flex w-full flex-col gap-3 border-b px-4 py-4 sm:px-6 xl:flex-row xl:items-center xl:justify-between">
               <DashboardProductsToolbar
@@ -187,7 +244,7 @@ export function DashboardPartsPage() {
               />
             </CardHeader>
 
-            <CardContent>
+            <CardContent className="pb-5">
               {isLoading ? (
                 <Card>
                   <Empty className="flex min-h-64 flex-col gap-3">

@@ -215,6 +215,7 @@ export const landingContent = {
       noResultsTitle: "No matching parts",
       noResultsDescription: "Try changing your search or filter selection.",
       addPart: "Add part",
+      totalParts: "Total parts (By quantity)",
     },
     footer: {
       description:
@@ -415,10 +416,10 @@ export const landingContent = {
       descending: "Kushuka",
       status: "Hali",
       allStatuses: "Hali zote",
-      inStock: "Zipo stoo",
-      lowStock: "Stoo ndogo",
-      outOfStock: "Hazipo stoo",
-      uncategorized: "Hakuna kundi",
+      inStock: "Zilizopo stoo",
+      lowStock: "Zilizo chache",
+      outOfStock: "Zilizoisha stoo",
+      uncategorized: "Haina kundi",
       selectAll: "Chagua spea zote kwenye ukurasa huu",
       selectPart: "Chagua spea",
       number: "#",
@@ -444,6 +445,7 @@ export const landingContent = {
       noResultsTitle: "Hakuna spea zilizopatikana",
       noResultsDescription: "Badilisha utafutaji au kichujio chako.",
       addPart: "Ongeza spea",
+      totalParts: "Jumla ya Spea (Kwa idadi)",
     },
     footer: {
       description:

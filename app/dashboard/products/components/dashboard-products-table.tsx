@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/table"
 import type { PartResponseDTO } from "@/lib/dtos/part_dtos"
 import type { DashboardPartsCopy } from "@/lib/types"
+import Image from "next/image"
 
 type DashboardProductsTableProps = {
   allVisiblePartsSelected: boolean
@@ -42,6 +43,45 @@ type DashboardProductsTableProps = {
   selectedPartIds: Set<number>
   someVisiblePartsSelected: boolean
   visibleParts: PartResponseDTO[]
+}
+
+/** Deterministic pastel gradient from a part name so every fallback avatar has its own colour */
+function avatarGradient(name: string) {
+  let hash = 0
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  const h1 = Math.abs(hash) % 360
+  const h2 = (h1 + 40) % 360
+  return `linear-gradient(135deg, hsl(${h1},70%,60%), hsl(${h2},70%,45%))`
+}
+
+function PartAvatar({ name, imageUrl }: { name: string; imageUrl: string | null }) {
+  if (imageUrl) {
+    return (
+      <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full">
+        <Image
+          src={imageUrl}
+          alt={name}
+          fill
+          unoptimized
+          className="h-8 w-8 object-cover"
+        />
+      </div>
+    )
+  }
+
+  return (
+    <div
+      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full ring-2 ring-border select-none"
+      style={{ background: avatarGradient(name) }}
+      aria-label={name}
+    >
+      <span className="text-xs font-bold uppercase text-white">
+        {name.charAt(0)}
+      </span>
+    </div>
+  )
 }
 
 function resolveStatusBadge(copy: DashboardPartsCopy, status: PartResponseDTO["status"]) {
@@ -83,7 +123,9 @@ export function DashboardProductsTable({
               aria-label={copy.selectAll}
             />
           </TableHead>
-          <TableHead>{copy.number}</TableHead>
+          <TableHead className="w-10">{copy.number}</TableHead>
+          {/* avatar column — fixed narrow width */}
+          <TableHead className="w-12" />
           <TableHead>{copy.partName}</TableHead>
           <TableHead>{copy.partNumber}</TableHead>
           <TableHead>{copy.category}</TableHead>
@@ -114,9 +156,12 @@ export function DashboardProductsTable({
               />
             </TableCell>
             <TableCell>{pageStartIndex + index + 1}</TableCell>
-            <TableCell>{part.partName}</TableCell>
+            <TableCell className="py-2">
+              <PartAvatar name={part.partName} imageUrl={part.imageUrl} />
+            </TableCell>
+            <TableCell className="font-medium">{part.partName}</TableCell>
             <TableCell>{part.partNumber}</TableCell>
-            <TableCell>{part.categoryName ?? copy.uncategorized}</TableCell>
+            <TableCell>{part.categoryName ?? <span className="dark:text-white/40 text-black/40 italic">{copy.uncategorized}</span> }</TableCell>
             <TableCell>{part.quantity}</TableCell>
             <TableCell>{formatPrice(part.price)}</TableCell>
             <TableCell>{resolveStatusBadge(copy, part.status)}</TableCell>

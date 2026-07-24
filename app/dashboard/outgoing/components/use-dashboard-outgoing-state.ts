@@ -74,7 +74,11 @@ export function useDashboardOutgoingState(locale: LandingLocale) {
   })
 
   useEffect(() => {
-    void loadDispatches()
+    const timeoutId = window.setTimeout(() => {
+      void loadDispatches()
+    }, 0)
+
+    return () => window.clearTimeout(timeoutId)
   }, [])
 
   const filteredDispatches = useMemo(() => {
@@ -86,7 +90,6 @@ export function useDashboardOutgoingState(locale: LandingLocale) {
           normalizedQuery.length === 0 ||
           [
             dispatch.dispatchNumber ?? "",
-            dispatch.recipientName ?? "",
             dispatch.purpose,
             dispatch.dispatchedByName ?? "",
             dispatch.notes ?? "",
@@ -153,7 +156,6 @@ export function useDashboardOutgoingState(locale: LandingLocale) {
     isLoading,
     lastVisibleDispatch,
     loadError,
-    loadDispatches,
     pageSize,
     pageStartIndex,
     prependDispatch,

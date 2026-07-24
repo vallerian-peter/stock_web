@@ -10,8 +10,7 @@ export type OutgoingStockItemRequestDTO = {
 
 export type OutgoingStockRequestDTO = {
   dispatchNumber?: string
-  recipientName?: string
-  purpose: string // 'SALE', 'technician', 'damaged', 'return', 'transfer', etc.
+  purpose: string // 'SALE', 'DAMAGED', 'RETURN'
   dispatchedAt: string
   notes?: string
   items: OutgoingStockItemRequestDTO[]
@@ -20,6 +19,11 @@ export type OutgoingStockRequestDTO = {
   paymentStatus?: string
   paymentMethod?: string
   amountPaid?: number
+  additionalAmount?: number
+  customerName?: string
+  customerPhone?: string
+  isDebt?: boolean
+  debtDueDate?: string
   saleNumber?: string
 }
 
@@ -50,6 +54,7 @@ export type OutgoingStockResponseDTO = {
     paymentMethod: string | null
     totalAmount: string
     amountPaid: string
+    receivableId: number | null
   } | null
 }
 

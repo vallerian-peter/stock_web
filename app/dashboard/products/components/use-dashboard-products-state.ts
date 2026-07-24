@@ -10,10 +10,7 @@ import type { CategoryResponseDTO } from "@/lib/dtos/category_dtos"
 import type { PartResponseDTO } from "@/lib/dtos/part_dtos"
 import { formatCurrencyTZS, toHumanForm } from "@/lib/formatters"
 import type { LandingLocale } from "@/lib/landing-content"
-import type {
-  PartsSortDirection,
-  PartsStatusFilter,
-} from "@/lib/types"
+import type { PartsSortDirection, PartsStatusFilter } from "@/lib/types"
 
 function getCreatedAtTimestamp(createdAt: string) {
   const timestamp = new Date(createdAt).getTime()
@@ -195,20 +192,26 @@ export function useDashboardPartsState(locale: LandingLocale) {
   }, [locale, searchQuery, sortDirection, statusFilter, tableParts])
 
   const stats = useMemo(() => {
-    let totalParts = 0
+    let totalQuantity = 0
     let inStock = 0
     let lowStock = 0
     let outOfStock = 0
 
     tableParts.forEach((part) => {
-      totalParts += part.quantity
+      totalQuantity += part.quantity
 
       if (part.status === "in_stock") inStock++
       else if (part.status === "low_stock") lowStock++
       else if (part.status === "out_of_stock") outOfStock++
     })
 
-    return { totalParts, inStock, lowStock, outOfStock }
+    return {
+      totalPartCount: tableParts.length,
+      totalQuantity,
+      inStock,
+      lowStock,
+      outOfStock,
+    }
   }, [tableParts])
 
   const totalPages = Math.max(1, Math.ceil(filteredParts.length / pageSize))
@@ -218,8 +221,7 @@ export function useDashboardPartsState(locale: LandingLocale) {
     pageStartIndex,
     pageStartIndex + pageSize
   )
-  const firstVisiblePart =
-    filteredParts.length === 0 ? 0 : pageStartIndex + 1
+  const firstVisiblePart = filteredParts.length === 0 ? 0 : pageStartIndex + 1
   const lastVisiblePart = Math.min(
     pageStartIndex + pageSize,
     filteredParts.length
@@ -229,8 +231,7 @@ export function useDashboardPartsState(locale: LandingLocale) {
     selectedPartIds.has(id)
   ).length
   const allVisiblePartsSelected =
-    visiblePartIds.length > 0 &&
-    selectedVisibleCount === visiblePartIds.length
+    visiblePartIds.length > 0 && selectedVisibleCount === visiblePartIds.length
   const someVisiblePartsSelected =
     selectedVisibleCount > 0 && !allVisiblePartsSelected
   const selectedPartCount = selectedPartIds.size
@@ -287,10 +288,7 @@ export function useDashboardPartsState(locale: LandingLocale) {
     setTableParts((currentParts) => [part, ...currentParts])
   }
 
-  function patchPart(
-    partId: number,
-    nextPart: Partial<PartResponseDTO>
-  ) {
+  function patchPart(partId: number, nextPart: Partial<PartResponseDTO>) {
     setTableParts((currentParts) =>
       currentParts.map((part) =>
         part.id === partId ? { ...part, ...nextPart } : part

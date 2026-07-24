@@ -17,6 +17,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Field, FieldLabel } from "@/components/ui/field"
+import { Checkbox } from "@/components/ui/checkbox"
+import {
+  DateInputField,
+  DateTimeInputField,
+} from "@/components/ui/date-input-field"
 import { InputField } from "@/components/ui/input-field"
 import { Textarea } from "@/components/ui/textarea"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -81,6 +86,10 @@ export function IncomeStockFormDialog({
 }: IncomeStockFormDialogProps) {
   const [invoiceNumber, setInvoiceNumber] = useState("")
   const [supplierName, setSupplierName] = useState("")
+  const [isDebt, setIsDebt] = useState(false)
+  const [supplierPhone, setSupplierPhone] = useState("")
+  const [debtDueDate, setDebtDueDate] = useState("")
+  const [debtAmountPaid, setDebtAmountPaid] = useState<number | "">(0)
   const [receivedAt, setReceivedAt] = useState(() => {
     const now = new Date()
     now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
@@ -103,6 +112,7 @@ export function IncomeStockFormDialog({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [activeNewPartRowLocalId, setActiveNewPartRowLocalId] = useState<string | null>(null)
   const { locale } = useLandingLocale()
+  const numberLocale = locale === "sw" ? "sw-TZ" : "en-TZ"
 
   // Fetch Parts Catalog and Categories on mount
   useEffect(() => {
@@ -189,9 +199,27 @@ export function IncomeStockFormDialog({
       }
     }
 
+    const amountPaid = Number(debtAmountPaid || 0)
+    if (isDebt && !supplierPhone.trim()) {
+      toast.error(copy.validation.debtPhoneRequired)
+      return
+    }
+
+    if (
+      isDebt &&
+      (!Number.isFinite(amountPaid) || amountPaid < 0 || amountPaid >= grandTotal)
+    ) {
+      toast.error(copy.validation.debtAmountInvalid)
+      return
+    }
+
     const payload = {
       invoiceNumber: invoiceNumber.trim() || undefined,
       supplierName: supplierName.trim(),
+      supplierPhone: isDebt ? supplierPhone.trim() : undefined,
+      isDebt,
+      debtDueDate: isDebt && debtDueDate ? debtDueDate : undefined,
+      amountPaid: isDebt ? amountPaid : undefined,
       receivedAt: new Date(receivedAt).toISOString(),
       notes: notes.trim() || undefined,
       items: parsedItems,
@@ -252,14 +280,68 @@ export function IncomeStockFormDialog({
               disabled={isSubmitting}
               onChange={(e) => setInvoiceNumber(e.target.value)}
             />
-            <InputField
-              type="datetime-local"
+            <DateTimeInputField
               labelText={copy.receivedAt}
               value={receivedAt}
               required
               disabled={isSubmitting}
-              onChange={(e) => setReceivedAt(e.target.value)}
+              onValueChange={setReceivedAt}
             />
+          </div>
+
+          <div className="rounded-xl border border-dashed border-border bg-muted/30 px-3 py-3 text-xs">
+            <label className="flex items-start gap-2">
+              <Checkbox
+                checked={isDebt}
+                disabled={isSubmitting}
+                onCheckedChange={(checked) => {
+                  const nextIsDebt = checked === true
+                  setIsDebt(nextIsDebt)
+                  if (!nextIsDebt) {
+                    setSupplierPhone("")
+                    setDebtDueDate("")
+                    setDebtAmountPaid(0)
+                  }
+                }}
+                className="mt-0.5"
+              />
+              <span className="space-y-0.5">
+                <span className="block font-medium text-foreground">{copy.debtToggle}</span>
+                <span className="block text-muted-foreground">{copy.debtDescription}</span>
+              </span>
+            </label>
+
+            {isDebt ? (
+              <div className="mt-4 grid gap-4 sm:grid-cols-3">
+                <InputField
+                  type="tel"
+                  labelText={copy.supplierPhone}
+                  placeholder={copy.supplierPhonePlaceholder}
+                  value={supplierPhone}
+                  required
+                  disabled={isSubmitting}
+                  onChange={(event) => setSupplierPhone(event.target.value)}
+                />
+                <DateInputField
+                  labelText={copy.debtDueDate}
+                  value={debtDueDate}
+                  disabled={isSubmitting}
+                  onValueChange={setDebtDueDate}
+                />
+                <InputField
+                  type="number"
+                  min="0"
+                  max={grandTotal}
+                  step="0.01"
+                  labelText={copy.debtAmountPaid}
+                  value={debtAmountPaid}
+                  disabled={isSubmitting}
+                  onChange={(event) =>
+                    setDebtAmountPaid(event.target.value ? Number(event.target.value) : 0)
+                  }
+                />
+              </div>
+            ) : null}
           </div>
 
           <Field>
@@ -307,7 +389,7 @@ export function IncomeStockFormDialog({
                                   {matchingPart.partName}
                                 </span>
                                 <span className="text-[10px] text-muted-foreground">
-                                  SKU: {matchingPart.partNumber}
+                                  {copy.skuLabel}: {matchingPart.partNumber}
                                 </span>
                               </div>
                               <Button
@@ -379,7 +461,8 @@ export function IncomeStockFormDialog({
                                             {part.partName}
                                           </span>
                                           <span className="text-[10px] text-muted-foreground">
-                                            No: {part.partNumber} | Current Stock: {part.quantity}
+                                            {copy.partNumberLabel}: {part.partNumber} | {copy.currentStock}:{" "}
+                                            {part.quantity.toLocaleString(numberLocale)}
                                           </span>
                                         </button>
                                       ))}
@@ -414,7 +497,7 @@ export function IncomeStockFormDialog({
                                   <TooltipContent side="right" className="rounded-xl border bg-card p-3 text-[11px] text-foreground shadow-md">
                                     <div className="space-y-1.5">
                                       <span className="font-semibold text-amber-600">
-                                        Matching Products:
+                                        {copy.matchingProducts}:
                                       </span>
                                       {similar.slice(0, 3).map((p) => (
                                         <div
@@ -423,7 +506,10 @@ export function IncomeStockFormDialog({
                                         >
                                           <div className="flex flex-col">
                                             <span className="font-medium text-foreground">{p.partName}</span>
-                                            <span className="text-[9px] text-muted-foreground">No: {p.partNumber} | Stock: {p.quantity}</span>
+                                            <span className="text-[9px] text-muted-foreground">
+                                              {copy.partNumberLabel}: {p.partNumber} | {copy.stockLabel}:{" "}
+                                              {p.quantity.toLocaleString(numberLocale)}
+                                            </span>
                                           </div>
                                           <Button
                                             type="button"
@@ -436,7 +522,7 @@ export function IncomeStockFormDialog({
                                               updateRow(row.localId, "unitCost", Number(p.price) * 0.7)
                                             }}
                                           >
-                                            Select
+                                            {copy.select}
                                           </Button>
                                         </div>
                                       ))}
@@ -471,7 +557,7 @@ export function IncomeStockFormDialog({
                         />
                       </TableCell>
                       <TableCell className="text-right font-semibold text-xs text-foreground py-4 px-3">
-                        TZS {(row.quantity * row.unitCost).toLocaleString()}
+                        TZS {(row.quantity * row.unitCost).toLocaleString(numberLocale)}
                       </TableCell>
                       <TableCell className="text-center">
                         <Button
@@ -480,6 +566,7 @@ export function IncomeStockFormDialog({
                           size="icon"
                           className="size-8 rounded-lg text-muted-foreground hover:bg-red-500/10 hover:text-red-600"
                           onClick={() => removeRow(row.localId)}
+                          aria-label={copy.removePart}
                         >
                           <Trash2Icon className="size-4" />
                         </Button>
@@ -505,9 +592,9 @@ export function IncomeStockFormDialog({
               {copy.addRowBtn}
             </Button>
             <div className="text-right">
-              <span className="text-xs text-muted-foreground">Grand Total: </span>
+              <span className="text-xs text-muted-foreground">{copy.grandTotal}: </span>
               <span className="text-lg font-bold text-orange-600 dark:text-orange-400 ml-1.5">
-                TZS {grandTotal.toLocaleString()}
+                TZS {grandTotal.toLocaleString(numberLocale)}
               </span>
             </div>
           </div>

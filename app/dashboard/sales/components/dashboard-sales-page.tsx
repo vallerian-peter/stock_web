@@ -4,7 +4,7 @@ import { useState } from "react"
 import { PlusIcon } from "lucide-react"
 import { toast } from "sonner"
 
-import { createSale, deleteSale } from "@/api/sales_api"
+import { createSale, deleteSale, type SaleRequestDTO } from "@/api/sales_api"
 import { useConfirmAlertDialog } from "@/components/confirm-alert-dialog-provider"
 import { DashboardPage } from "@/components/dashboard/dashboard-page"
 import { useLandingLocale } from "@/components/landing-locale-provider"
@@ -30,7 +30,6 @@ import { useDashboardSalesState } from "./use-dashboard-sales-state"
 export function DashboardSalesPage() {
   const { locale } = useLandingLocale()
   const confirm = useConfirmAlertDialog()
-  const copy = landingContent[locale].dashboardProducts
   const userCopy = landingContent[locale].dashboardUsers
   const dialogCopy = salesDialogCopy[locale]
 
@@ -77,12 +76,12 @@ export function DashboardSalesPage() {
       await deleteSale(sale.id)
       removeSale(sale.id)
       toast.success(dialogCopy.deleteSuccess)
-    } catch (err) {
-      toast.error(locale === "sw" ? "Imeshindikana kufuta mauzo." : "Failed to delete sale record.")
+    } catch {
+      toast.error(dialogCopy.deleteError)
     }
   }
 
-  async function handleCreateSale(values: any) {
+  async function handleCreateSale(values: SaleRequestDTO) {
     const res = await createSale(values)
     prependSale(res)
     setActiveDialog({ type: null })
@@ -103,7 +102,7 @@ export function DashboardSalesPage() {
           <Card className="min-h-[auto_70vh] w-full rounded-lg border-border/60 bg-card/90 py-0 shadow-sm">
             <CardHeader className="flex w-full flex-col gap-3 border-b px-4 py-4 sm:px-6 xl:flex-row xl:items-center xl:justify-between">
               <DashboardSalesToolbar
-                copy={copy}
+                copy={dialogCopy}
                 onPageSizeChange={updatePageSize}
                 onSearchQueryChange={updateSearchQuery}
                 onSortDirectionChange={updateSortDirection}
@@ -116,22 +115,18 @@ export function DashboardSalesPage() {
             <CardContent className="pb-5">
               {isLoading ? (
                 <Empty className="flex min-h-64 flex-col gap-3">
-                  <EmptyTitle>{copy.showing}...</EmptyTitle>
-                  <EmptyDescription>{copy.loading}</EmptyDescription>
+                  <EmptyTitle>{dialogCopy.loadingTitle}</EmptyTitle>
+                  <EmptyDescription>{dialogCopy.loadingDescription}</EmptyDescription>
                 </Empty>
               ) : loadError ? (
                 <Empty className="flex min-h-64 flex-col gap-3">
-                  <EmptyTitle>{copy.loadErrorTitle}</EmptyTitle>
+                  <EmptyTitle>{dialogCopy.loadErrorTitle}</EmptyTitle>
                   <EmptyDescription>{loadError}</EmptyDescription>
                 </Empty>
               ) : tableSales.length === 0 ? (
                 <Empty className="flex min-h-64 flex-col gap-3">
-                  <EmptyTitle>
-                    {locale === "sw" ? "Hakuna mauzo bado" : "No sales yet"}
-                  </EmptyTitle>
-                  <EmptyDescription>
-                    {locale === "sw" ? "Sajili mauzo ya kwanza ya kaunta ili kuanza kufuatilia." : "Register the first counter sale to start tracking."}
-                  </EmptyDescription>
+                  <EmptyTitle>{dialogCopy.emptyTitle}</EmptyTitle>
+                  <EmptyDescription>{dialogCopy.emptyDescription}</EmptyDescription>
                   <EmptyContent>
                     <Button onClick={() => setActiveDialog({ type: "add" })} className="bg-orange-500 hover:bg-orange-600 text-white rounded-xl">
                       <PlusIcon data-icon="inline-start" />
@@ -141,8 +136,8 @@ export function DashboardSalesPage() {
                 </Empty>
               ) : filteredSales.length === 0 ? (
                 <Empty className="flex min-h-64 flex-col gap-3">
-                  <EmptyTitle>{copy.noResultsTitle}</EmptyTitle>
-                  <EmptyDescription>{copy.noResultsDescription}</EmptyDescription>
+                  <EmptyTitle>{dialogCopy.noResultsTitle}</EmptyTitle>
+                  <EmptyDescription>{dialogCopy.noResultsDescription}</EmptyDescription>
                 </Empty>
               ) : (
                 <DashboardSalesTable

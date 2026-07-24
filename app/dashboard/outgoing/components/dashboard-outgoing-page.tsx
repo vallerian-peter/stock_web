@@ -4,7 +4,11 @@ import { useState } from "react"
 import { PlusIcon } from "lucide-react"
 import { toast } from "sonner"
 
-import { createOutgoingStock, deleteOutgoingStock } from "@/api/outgoing_stocks_api"
+import {
+  createOutgoingStock,
+  deleteOutgoingStock,
+  type OutgoingStockRequestDTO,
+} from "@/api/outgoing_stocks_api"
 import { useConfirmAlertDialog } from "@/components/confirm-alert-dialog-provider"
 import { DashboardPage } from "@/components/dashboard/dashboard-page"
 import { useLandingLocale } from "@/components/landing-locale-provider"
@@ -30,7 +34,6 @@ import { useDashboardOutgoingState } from "./use-dashboard-outgoing-state"
 export function DashboardOutgoingPage() {
   const { locale } = useLandingLocale()
   const confirm = useConfirmAlertDialog()
-  const copy = landingContent[locale].dashboardProducts
   const userCopy = landingContent[locale].dashboardUsers
   const dialogCopy = outgoingDialogCopy[locale]
 
@@ -77,12 +80,12 @@ export function DashboardOutgoingPage() {
       await deleteOutgoingStock(dispatch.id)
       removeDispatch(dispatch.id)
       toast.success(dialogCopy.deleteSuccess)
-    } catch (err) {
-      toast.error(locale === "sw" ? "Imeshindikana kufuta utoaji stoo." : "Failed to delete dispatch log.")
+    } catch {
+      toast.error(dialogCopy.deleteError)
     }
   }
 
-  async function handleCreateDispatch(values: any) {
+  async function handleCreateDispatch(values: OutgoingStockRequestDTO) {
     const res = await createOutgoingStock(values)
     prependDispatch(res)
     setActiveDialog({ type: null })
@@ -103,7 +106,7 @@ export function DashboardOutgoingPage() {
           <Card className="min-h-[auto_70vh] w-full rounded-lg border-border/60 bg-card/90 py-0 shadow-sm">
             <CardHeader className="flex w-full flex-col gap-3 border-b px-4 py-4 sm:px-6 xl:flex-row xl:items-center xl:justify-between">
               <DashboardOutgoingToolbar
-                copy={copy}
+                copy={dialogCopy}
                 onPageSizeChange={updatePageSize}
                 onSearchQueryChange={updateSearchQuery}
                 onSortDirectionChange={updateSortDirection}
@@ -116,22 +119,18 @@ export function DashboardOutgoingPage() {
             <CardContent className="pb-5">
               {isLoading ? (
                 <Empty className="flex min-h-64 flex-col gap-3">
-                  <EmptyTitle>{copy.showing}...</EmptyTitle>
-                  <EmptyDescription>{copy.loading}</EmptyDescription>
+                  <EmptyTitle>{dialogCopy.loadingTitle}</EmptyTitle>
+                  <EmptyDescription>{dialogCopy.loadingDescription}</EmptyDescription>
                 </Empty>
               ) : loadError ? (
                 <Empty className="flex min-h-64 flex-col gap-3">
-                  <EmptyTitle>{copy.loadErrorTitle}</EmptyTitle>
+                  <EmptyTitle>{dialogCopy.loadErrorTitle}</EmptyTitle>
                   <EmptyDescription>{loadError}</EmptyDescription>
                 </Empty>
               ) : tableDispatches.length === 0 ? (
                 <Empty className="flex min-h-64 flex-col gap-3">
-                  <EmptyTitle>
-                    {locale === "sw" ? "Hakuna utoaji stoo bado" : "No dispatches yet"}
-                  </EmptyTitle>
-                  <EmptyDescription>
-                    {locale === "sw" ? "Sajili utoaji mpya ili kuanza kufuatilia stoo inayotoka." : "Record stock dispatch to start tracking outgoing items."}
-                  </EmptyDescription>
+                  <EmptyTitle>{dialogCopy.emptyTitle}</EmptyTitle>
+                  <EmptyDescription>{dialogCopy.emptyDescription}</EmptyDescription>
                   <EmptyContent>
                     <Button onClick={() => setActiveDialog({ type: "add" })} className="bg-orange-500 hover:bg-orange-600 text-white rounded-xl">
                       <PlusIcon data-icon="inline-start" />
@@ -141,8 +140,8 @@ export function DashboardOutgoingPage() {
                 </Empty>
               ) : filteredDispatches.length === 0 ? (
                 <Empty className="flex min-h-64 flex-col gap-3">
-                  <EmptyTitle>{copy.noResultsTitle}</EmptyTitle>
-                  <EmptyDescription>{copy.noResultsDescription}</EmptyDescription>
+                  <EmptyTitle>{dialogCopy.noResultsTitle}</EmptyTitle>
+                  <EmptyDescription>{dialogCopy.noResultsDescription}</EmptyDescription>
                 </Empty>
               ) : (
                 <DashboardOutgoingTable

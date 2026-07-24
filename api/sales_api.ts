@@ -11,9 +11,13 @@ export type SaleItemRequestDTO = {
 export type SaleRequestDTO = {
   saleNumber?: string
   customerName?: string
+  customerPhone?: string
+  isDebt?: boolean
+  debtDueDate?: string
   paymentStatus: string
   paymentMethod: string
   amountPaid?: number
+  additionalAmount?: number
   soldAt: string
   notes?: string
   items: SaleItemRequestDTO[]
@@ -43,6 +47,7 @@ export type SaleResponseDTO = {
   notes: string | null
   createdAt: string
   outgoingStockId: number | null
+  receivableId: number | null
   items: SaleItemResponseDTO[]
 }
 

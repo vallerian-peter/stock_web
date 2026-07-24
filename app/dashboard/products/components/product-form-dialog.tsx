@@ -319,15 +319,17 @@ export function ProductFormDialog({
               >
                 <SelectValue>
                   {(value) => {
-                    const v = value.replace('_', ' ');
-                    return v.toUpperCase();
+                    if (value === "in_stock") return copy.inStock
+                    if (value === "low_stock") return copy.lowStock
+                    if (value === "out_of_stock") return copy.outOfStock
+                    return value
                   }}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="in_stock">{copy.inStock.toUpperCase()}</SelectItem>
-                <SelectItem value="low_stock">{copy.lowStock.toUpperCase()}</SelectItem>
-                <SelectItem value="out_of_stock">{copy.outOfStock.toUpperCase()}</SelectItem>
+                <SelectItem value="in_stock">{copy.inStock}</SelectItem>
+                <SelectItem value="low_stock">{copy.lowStock}</SelectItem>
+                <SelectItem value="out_of_stock">{copy.outOfStock}</SelectItem>
               </SelectContent>
             </Select>
             <FieldError errors={[{ message: errors.status }]} />

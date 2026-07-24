@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge"
 import type { SaleResponseDTO } from "@/api/sales_api"
 import type { SalesDialogCopy } from "./sales-dialog-copy"
 import { cn } from "@/lib/utils"
+import { useLandingLocale } from "@/components/landing-locale-provider"
 
 type SalesViewDialogProps = {
   copy: SalesDialogCopy
@@ -26,6 +27,20 @@ export function SalesViewDialog({
   sale,
   onClose,
 }: SalesViewDialogProps) {
+  const { locale } = useLandingLocale()
+  const numberLocale = locale === "sw" ? "sw-TZ" : "en-TZ"
+
+  function localizePaymentMethod(method?: string | null) {
+    if (!method) return "—"
+
+    const methods: Record<string, string> = {
+      CASH: copy.methodCash,
+      MOBILE_MONEY: copy.methodMobileMoney,
+      BANK_TRANSFER: copy.methodBankTransfer,
+    }
+    return methods[method.toUpperCase()] || method
+  }
+
   function getStatusBadge(status: string) {
     const s = status.toUpperCase()
     const colorMap: Record<string, string> = {
@@ -34,9 +49,14 @@ export function SalesViewDialog({
       PARTIAL: "bg-blue-500/10 text-blue-700 dark:text-blue-300",
     }
     const colorClass = colorMap[s] || "bg-gray-500/10 text-gray-700 dark:text-gray-300"
+    const labels: Record<string, string> = {
+      PAID: copy.statusPaid,
+      PENDING: copy.statusPending,
+      PARTIAL: copy.statusPartial,
+    }
     return (
       <Badge className={cn("rounded-md border-0 px-2 py-0.5 text-[10px] font-medium", colorClass)}>
-        {s}
+        {labels[s] || status}
       </Badge>
     )
   }
@@ -70,12 +90,14 @@ export function SalesViewDialog({
             </div>
             <div>
               <span className="font-semibold text-muted-foreground">{copy.paymentMethod}: </span>
-              <span className="font-semibold text-foreground ml-1">{sale.paymentMethod || "—"}</span>
+              <span className="font-semibold text-foreground ml-1">
+                {localizePaymentMethod(sale.paymentMethod)}
+              </span>
             </div>
             <div>
-              <span className="font-semibold text-muted-foreground">Amount Paid: </span>
+              <span className="font-semibold text-muted-foreground">{copy.amountPaid}: </span>
               <span className="font-bold text-foreground ml-1">
-                TZS {Number(sale.amountPaid).toLocaleString()}
+                TZS {Number(sale.amountPaid).toLocaleString(numberLocale)}
               </span>
             </div>
             <div>
@@ -85,7 +107,7 @@ export function SalesViewDialog({
             <div>
               <span className="font-semibold text-muted-foreground">{copy.soldAt}: </span>
               <span className="font-medium text-foreground ml-1">
-                {new Date(sale.soldAt).toLocaleString()}
+                {new Date(sale.soldAt).toLocaleString(numberLocale)}
               </span>
             </div>
             {sale.notes && (
@@ -104,7 +126,7 @@ export function SalesViewDialog({
               <TableHeader className="bg-muted/40">
                 <TableRow>
                   <TableHead className="w-10">#</TableHead>
-                  <TableHead>Part Name</TableHead>
+                  <TableHead>{copy.partNameLabel}</TableHead>
                   <TableHead className="w-24 text-right">{copy.qtyLabel}</TableHead>
                   <TableHead className="w-32 text-right">{copy.priceLabel}</TableHead>
                   <TableHead className="w-36 text-right">{copy.subtotalLabel}</TableHead>
@@ -119,15 +141,17 @@ export function SalesViewDialog({
                     <TableCell>
                       <div className="flex flex-col">
                         <span className="font-semibold text-foreground text-xs">{item.partName}</span>
-                        <span className="text-[9px] text-muted-foreground">No: {item.partNumber}</span>
+                        <span className="text-[9px] text-muted-foreground">
+                          {copy.partNumberLabel}: {item.partNumber}
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell className="text-right text-xs">{item.quantity}</TableCell>
                     <TableCell className="text-right text-xs">
-                      TZS {Number(item.unitPrice).toLocaleString()}
+                      TZS {Number(item.unitPrice).toLocaleString(numberLocale)}
                     </TableCell>
                     <TableCell className="text-right font-semibold text-xs text-foreground">
-                      TZS {Number(item.subtotal).toLocaleString()}
+                      TZS {Number(item.subtotal).toLocaleString(numberLocale)}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -137,12 +161,13 @@ export function SalesViewDialog({
 
           <div className="flex justify-between items-center">
             <div className="text-xs text-muted-foreground">
-              Total items sold: {sale.items.reduce((acc, i) => acc + i.quantity, 0)}
+              {copy.totalItemsSoldByQuantity}:{" "}
+              {sale.items.reduce((acc, item) => acc + item.quantity, 0).toLocaleString(numberLocale)}
             </div>
             <div className="text-right">
-              <span className="text-sm font-medium text-muted-foreground">Grand Total: </span>
+              <span className="text-sm font-medium text-muted-foreground">{copy.grandTotal}: </span>
               <span className="text-lg font-bold text-orange-600 dark:text-orange-400 ml-1.5">
-                TZS {Number(sale.totalAmount).toLocaleString()}
+                TZS {Number(sale.totalAmount).toLocaleString(numberLocale)}
               </span>
             </div>
           </div>

@@ -1,16 +1,23 @@
+"use client"
+
 import { PlusIcon } from "lucide-react"
 
 import { DashboardPage } from "@/components/dashboard/dashboard-page"
+import { useLandingLocale } from "@/components/landing-locale-provider"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { categoryDialogCopy } from "./category-dialog-copy"
 
 export function DashboardCategoriesPageFallback() {
+  const { locale } = useLandingLocale()
+  const copy = categoryDialogCopy[locale]
+
   return (
     <DashboardPage
       actions={
         <Button disabled>
           <PlusIcon data-icon="inline-start" />
-          Add category
+          {copy.addTitle}
         </Button>
       }
     >

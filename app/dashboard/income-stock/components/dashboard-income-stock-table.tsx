@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/table"
 import type { IncomingStockResponseDTO } from "@/api/incoming_stocks_api"
 import type { IncomeStockDialogCopy } from "./income-stock-dialog-copy"
+import { useLandingLocale } from "@/components/landing-locale-provider"
 
 type DashboardIncomeStockTableProps = {
   copy: IncomeStockDialogCopy
@@ -37,6 +38,9 @@ export function DashboardIncomeStockTable({
   pageStartIndex,
   visibleIntakes,
 }: DashboardIncomeStockTableProps) {
+  const { locale } = useLandingLocale()
+  const numberLocale = locale === "sw" ? "sw-TZ" : "en-TZ"
+
   return (
     <Table>
       <TableHeader className="bg-muted">
@@ -48,7 +52,7 @@ export function DashboardIncomeStockTable({
           <TableHead>{copy.loggedBy}</TableHead>
           <TableHead>{copy.receivedAt}</TableHead>
           <TableHead className="w-12">
-            <span className="sr-only">Actions</span>
+            <span className="sr-only">{copy.actions}</span>
           </TableHead>
         </TableRow>
       </TableHeader>
@@ -59,7 +63,7 @@ export function DashboardIncomeStockTable({
             <TableCell className="font-mono text-xs">{intake.invoiceNumber || "—"}</TableCell>
             <TableCell className="font-medium">{intake.supplierName || "—"}</TableCell>
             <TableCell className="font-semibold text-orange-600 dark:text-orange-400">
-              TZS {Number(intake.totalAmount).toLocaleString()}
+              TZS {Number(intake.totalAmount).toLocaleString(numberLocale)}
             </TableCell>
             <TableCell>{intake.receivedByName || "—"}</TableCell>
             <TableCell>{formatReceivedAt(intake.receivedAt)}</TableCell>
@@ -71,7 +75,7 @@ export function DashboardIncomeStockTable({
                       type="button"
                       variant="ghost"
                       size="icon"
-                      aria-label="Open Actions"
+                      aria-label={copy.openActions}
                     >
                       <MoreVerticalIcon />
                     </Button>

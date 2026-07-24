@@ -49,12 +49,11 @@ export function DashboardUsersPage() {
     isLoading,
     lastVisibleUser,
     loadError,
-    loadUsers,
+    reloadUsers,
     pageSize,
     pageStartIndex,
     patchUser,
     prependUser,
-    removeSelectedUsers,
     removeUser,
     removeUsers,
     safeCurrentPage,
@@ -77,11 +76,7 @@ export function DashboardUsersPage() {
 
   async function handleDeleteUser(userPendingDelete: UserResponseDTO) {
     if (isProtectedUser(userPendingDelete)) {
-      toast.error(
-        locale === "sw"
-          ? "Admin anaweza kuhaririwa tu. Huwezi kumfuta."
-          : "Admin users can only be edited. You cannot delete them."
-      )
+      toast.error(dialogCopy.protectedUserDelete)
       return
     }
 
@@ -109,11 +104,7 @@ export function DashboardUsersPage() {
     )
 
     if (deletableUsers.length === 0) {
-      toast.error(
-        locale === "sw"
-          ? "Watumiaji wa admin hawawezi kufutwa."
-          : "Admin users cannot be deleted."
-      )
+      toast.error(dialogCopy.protectedUsersBulkDelete)
       return
     }
 
@@ -202,7 +193,7 @@ export function DashboardUsersPage() {
                     <EmptyTitle>{copy.loadErrorTitle}</EmptyTitle>
                     <EmptyDescription>{loadError}</EmptyDescription>
                     <EmptyContent>
-                      <Button onClick={() => void loadUsers()}>
+                      <Button onClick={reloadUsers}>
                         {copy.retry}
                       </Button>
                     </EmptyContent>

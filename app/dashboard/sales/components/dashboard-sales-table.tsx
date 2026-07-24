@@ -21,6 +21,7 @@ import {
 import type { SaleResponseDTO } from "@/api/sales_api"
 import type { SalesDialogCopy } from "./sales-dialog-copy"
 import { cn } from "@/lib/utils"
+import { useLandingLocale } from "@/components/landing-locale-provider"
 
 type DashboardSalesTableProps = {
   copy: SalesDialogCopy
@@ -39,6 +40,20 @@ export function DashboardSalesTable({
   pageStartIndex,
   visibleSales,
 }: DashboardSalesTableProps) {
+  const { locale } = useLandingLocale()
+  const numberLocale = locale === "sw" ? "sw-TZ" : "en-TZ"
+
+  function localizePaymentMethod(method?: string | null) {
+    if (!method) return "—"
+
+    const methods: Record<string, string> = {
+      CASH: copy.methodCash,
+      MOBILE_MONEY: copy.methodMobileMoney,
+      BANK_TRANSFER: copy.methodBankTransfer,
+    }
+    return methods[method.toUpperCase()] || method
+  }
+
   function getStatusBadge(status: string) {
     const s = status.toUpperCase()
     const colorMap: Record<string, string> = {
@@ -47,9 +62,14 @@ export function DashboardSalesTable({
       PARTIAL: "bg-blue-500/10 text-blue-700 dark:text-blue-300",
     }
     const colorClass = colorMap[s] || "bg-gray-500/10 text-gray-700 dark:text-gray-300"
+    const labels: Record<string, string> = {
+      PAID: copy.statusPaid,
+      PENDING: copy.statusPending,
+      PARTIAL: copy.statusPartial,
+    }
     return (
       <Badge className={cn("rounded-md border-0 px-2 py-0.5 text-[10px] font-medium", colorClass)}>
-        {s}
+        {labels[s] || status}
       </Badge>
     )
   }
@@ -63,11 +83,11 @@ export function DashboardSalesTable({
           <TableHead>{copy.customerName}</TableHead>
           <TableHead>{copy.paymentStatus}</TableHead>
           <TableHead>{copy.paymentMethod}</TableHead>
-          <TableHead>Total Amount</TableHead>
+          <TableHead>{copy.totalAmount}</TableHead>
           <TableHead>{copy.loggedBy}</TableHead>
           <TableHead>{copy.soldAt}</TableHead>
           <TableHead className="w-12">
-            <span className="sr-only">Actions</span>
+            <span className="sr-only">{copy.actions}</span>
           </TableHead>
         </TableRow>
       </TableHeader>
@@ -78,9 +98,11 @@ export function DashboardSalesTable({
             <TableCell className="font-mono text-xs">{sale.saleNumber || "—"}</TableCell>
             <TableCell className="font-medium">{sale.customerName || "—"}</TableCell>
             <TableCell>{getStatusBadge(sale.paymentStatus)}</TableCell>
-            <TableCell className="text-xs font-semibold">{sale.paymentMethod || "—"}</TableCell>
+            <TableCell className="text-xs font-semibold">
+              {localizePaymentMethod(sale.paymentMethod)}
+            </TableCell>
             <TableCell className="font-bold text-orange-600 dark:text-orange-400">
-              TZS {Number(sale.totalAmount).toLocaleString()}
+              TZS {Number(sale.totalAmount).toLocaleString(numberLocale)}
             </TableCell>
             <TableCell>{sale.soldByName || "—"}</TableCell>
             <TableCell>{formatSoldAt(sale.soldAt)}</TableCell>
@@ -92,7 +114,7 @@ export function DashboardSalesTable({
                       type="button"
                       variant="ghost"
                       size="icon"
-                      aria-label="Open Actions"
+                      aria-label={copy.openActions}
                     >
                       <MoreVerticalIcon />
                     </Button>

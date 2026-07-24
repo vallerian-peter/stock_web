@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/dialog"
 
 import type { CategoryDialogCopy } from "./category-dialog-copy"
+import { useLandingLocale } from "@/components/landing-locale-provider"
+import { toHumanForm } from "@/lib/formatters"
 
 type CategoryViewDialogProps = {
   copy: CategoryDialogCopy
@@ -24,9 +26,10 @@ export function CategoryViewDialog({
   category,
   onClose,
 }: CategoryViewDialogProps) {
+  const { locale } = useLandingLocale()
   const details = [
     [copy.name, category.name],
-    [copy.createdAt, category.createdAt],
+    [copy.createdAt, toHumanForm(category.createdAt, locale)],
   ]
 
   return (

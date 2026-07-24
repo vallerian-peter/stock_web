@@ -89,7 +89,7 @@ export function ProductBulkFormDialog({
 
   function removeRow(localId: string) {
     if (rows.length <= 1) {
-      toast.warning("Please keep at least one product row.")
+      toast.warning(copy.keepOneRow)
       return
     }
     setRows((curr) => curr.filter((r) => r.localId !== localId))
@@ -132,23 +132,23 @@ export function ProductBulkFormDialog({
       const rowNum = i + 1
 
       if (!row.partName.trim()) {
-        toast.error(`Row ${rowNum}: ${copy.validation.partNameRequired}`)
+        toast.error(`${copy.rowLabel} ${rowNum}: ${copy.validation.partNameRequired}`)
         return
       }
       if (row.partName.trim().length < 2) {
-        toast.error(`Row ${rowNum}: ${copy.validation.partNameLength}`)
+        toast.error(`${copy.rowLabel} ${rowNum}: ${copy.validation.partNameLength}`)
         return
       }
       if (!row.partNumber.trim()) {
-        toast.error(`Row ${rowNum}: ${copy.validation.partNumberRequired}`)
+        toast.error(`${copy.rowLabel} ${rowNum}: ${copy.validation.partNumberRequired}`)
         return
       }
       if (!row.quantity.trim() || Number.isNaN(Number(row.quantity)) || Number(row.quantity) < 0) {
-        toast.error(`Row ${rowNum}: ${copy.validation.quantityRequired}`)
+        toast.error(`${copy.rowLabel} ${rowNum}: ${copy.validation.quantityRequired}`)
         return
       }
       if (!row.price.trim() || Number.isNaN(Number(row.price)) || Number(row.price) < 0) {
-        toast.error(`Row ${rowNum}: ${copy.validation.priceRequired}`)
+        toast.error(`${copy.rowLabel} ${rowNum}: ${copy.validation.priceRequired}`)
         return
       }
     }
@@ -324,6 +324,7 @@ export function ProductBulkFormDialog({
                         className="size-8 rounded-lg text-muted-foreground hover:bg-red-500/10 hover:text-red-600"
                         onClick={() => removeRow(row.localId)}
                         disabled={isSubmitting}
+                        aria-label={copy.removePart}
                       >
                         <Trash2Icon className="size-4" />
                       </Button>

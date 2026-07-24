@@ -15,6 +15,7 @@ const ALL_DASHBOARD_SECTIONS: DashboardSectionKey[] = [
   "sales",
   "payable",
   "receivable",
+  "notifications",
   "analytics",
   "settings",
   "helpCenter",
@@ -30,6 +31,7 @@ export const ROLE_ACCESS = {
     "incomeStock",
     "outgoing",
     "sales",
+    "notifications",
     "helpCenter",
     "account",
   ],
@@ -65,6 +67,7 @@ export function getDashboardSectionFromPath(
   if (pathname.startsWith("/dashboard/sales")) return "sales"
   if (pathname.startsWith("/dashboard/debts/payable")) return "payable"
   if (pathname.startsWith("/dashboard/debts/receivable")) return "receivable"
+  if (pathname.startsWith("/dashboard/notifications")) return "notifications"
   if (pathname.startsWith("/dashboard/analytics")) return "analytics"
   if (pathname.startsWith("/dashboard/settings")) return "settings"
   if (pathname.startsWith("/dashboard/help-center")) return "helpCenter"

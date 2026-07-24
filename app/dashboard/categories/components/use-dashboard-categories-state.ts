@@ -30,6 +30,7 @@ export function useDashboardCategoriesState(locale: LandingLocale) {
     useState<CategoriesSortDirection>("asc")
   const [isLoading, setIsLoading] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [reloadVersion, setReloadVersion] = useState(0)
 
   function formatCreatedAt(createdAt: string) {
     return toHumanForm(createdAt, locale)
@@ -82,8 +83,16 @@ export function useDashboardCategoriesState(locale: LandingLocale) {
   })
 
   useEffect(() => {
-    void loadCategories()
-  }, [])
+    const timeoutId = window.setTimeout(() => {
+      void loadCategories()
+    }, 0)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [reloadVersion])
+
+  function reloadCategories() {
+    setReloadVersion((current) => current + 1)
+  }
 
   const filteredCategories = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLocaleLowerCase(locale)
@@ -220,7 +229,6 @@ export function useDashboardCategoriesState(locale: LandingLocale) {
     formatCreatedAt,
     isLoading,
     lastVisibleCategory,
-    loadCategories,
     loadError,
     pageSize,
     pageStartIndex,
@@ -228,6 +236,7 @@ export function useDashboardCategoriesState(locale: LandingLocale) {
     prependCategory,
     removeCategories,
     removeCategory,
+    reloadCategories,
     safeCurrentPage,
     searchQuery,
     selectedCategoryCount,

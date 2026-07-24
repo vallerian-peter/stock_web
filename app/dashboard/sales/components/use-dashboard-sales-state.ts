@@ -74,7 +74,11 @@ export function useDashboardSalesState(locale: LandingLocale) {
   })
 
   useEffect(() => {
-    void loadSales()
+    const timeoutId = window.setTimeout(() => {
+      void loadSales()
+    }, 0)
+
+    return () => window.clearTimeout(timeoutId)
   }, [])
 
   const filteredSales = useMemo(() => {
@@ -154,7 +158,6 @@ export function useDashboardSalesState(locale: LandingLocale) {
     isLoading,
     lastVisibleSale,
     loadError,
-    loadSales,
     pageSize,
     pageStartIndex,
     prependSale,

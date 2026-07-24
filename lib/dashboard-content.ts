@@ -10,6 +10,7 @@ export type DashboardSectionKey =
   | "sales"
   | "payable"
   | "receivable"
+  | "notifications"
   | "analytics"
   | "settings"
   | "helpCenter"
@@ -53,6 +54,8 @@ export const dashboardContent: Record<
       collapseSidebar: string
       expandSidebar: string
       topbarHint: string
+      rightsReserved: string
+      developedBy: string
     }
     nav: Record<DashboardSectionKey, string>
     overview: {
@@ -119,7 +122,8 @@ export const dashboardContent: Record<
       profile: "My profile",
       signOut: "Sign out",
       signOutConfirmTitle: "Sign Out",
-      signOutConfirmDescription: "Are you sure you want to sign out of your account?",
+      signOutConfirmDescription:
+        "Are you sure you want to sign out of your account?",
       cancel: "Cancel",
       notifications: "Alerts",
       language: "Language",
@@ -127,6 +131,8 @@ export const dashboardContent: Record<
       collapseSidebar: "Collapse sidebar",
       expandSidebar: "Expand sidebar",
       topbarHint: "Monitor stock movement and team actions in one place.",
+      rightsReserved: "All rights reserved",
+      developedBy: "Developed and designed by Vallerian",
     },
     nav: {
       dashboard: "Dashboard",
@@ -138,6 +144,7 @@ export const dashboardContent: Record<
       sales: "Sales",
       payable: "Payable",
       receivable: "Receivable",
+      notifications: "Notifications",
       analytics: "Reports and Analytics",
       settings: "Settings",
       helpCenter: "Help Center",
@@ -381,6 +388,14 @@ export const dashboardContent: Record<
           "Schedule weekly collection follow-up by owner or accountant.",
         ],
       },
+      notifications: {
+        eyebrow: "Business alerts",
+        title: "Review stock, debt, and daily activity notifications.",
+        description:
+          "Use one notification center to review urgent conditions and move directly to the related business record.",
+        stats: [],
+        actions: [],
+      },
       analytics: {
         eyebrow: "Reporting",
         title: "Turn stock movement into decisions, not just records.",
@@ -466,7 +481,8 @@ export const dashboardContent: Record<
       profile: "Wasifu wangu",
       signOut: "Toka",
       signOutConfirmTitle: "Toka",
-      signOutConfirmDescription: "Je, una uhakika unataka kutoka kwenye akaunti yako?",
+      signOutConfirmDescription:
+        "Je, una uhakika unataka kutoka kwenye akaunti yako?",
       cancel: "Ghairi",
       notifications: "Tahadhari",
       language: "Lugha",
@@ -475,6 +491,8 @@ export const dashboardContent: Record<
       expandSidebar: "Panua menyu ya pembeni",
       topbarHint:
         "Fuatilia mzunguko wa stoo na hatua za timu katika sehemu moja.",
+      rightsReserved: "Haki zote zimehifadhiwa",
+      developedBy: "Imetengenezwa na kubuniwa na Vallerian",
     },
     nav: {
       dashboard: "Dashibodi",
@@ -486,6 +504,7 @@ export const dashboardContent: Record<
       sales: "Mauzo",
       payable: "Tunayodaiwa",
       receivable: "Tunayodai",
+      notifications: "Taarifa",
       analytics: "Ripoti na Uchambuzi",
       settings: "Mipangilio",
       helpCenter: "Kituo cha Msaada",
@@ -731,6 +750,14 @@ export const dashboardContent: Record<
           "Tenganisha wateja wa kimkakati na wadaiwa hatarishi.",
           "Panga ufuatiliaji wa ukusanyaji kila wiki na mmiliki au mhasibu.",
         ],
+      },
+      notifications: {
+        eyebrow: "Tahadhari za biashara",
+        title: "Kagua taarifa za stoo, madeni, na shughuli za kila siku.",
+        description:
+          "Tumia kituo kimoja cha taarifa kukagua hali muhimu na kufungua rekodi ya biashara inayohusika.",
+        stats: [],
+        actions: [],
       },
       analytics: {
         eyebrow: "Ripoti",

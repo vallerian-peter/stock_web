@@ -34,6 +34,7 @@ export function useDashboardUsersState(locale: LandingLocale) {
     useState<UsersStatusFilter>("all")
   const [isLoading, setIsLoading] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [reloadVersion, setReloadVersion] = useState(0)
 
   function formatCreatedAt(createdAt: string) {
     return toHumanForm(createdAt, locale)
@@ -86,8 +87,16 @@ export function useDashboardUsersState(locale: LandingLocale) {
   })
 
   useEffect(() => {
-    void loadUsers()
-  }, [])
+    const timeoutId = window.setTimeout(() => {
+      void loadUsers()
+    }, 0)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [reloadVersion])
+
+  function reloadUsers() {
+    setReloadVersion((current) => current + 1)
+  }
 
   const filteredUsers = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLocaleLowerCase(locale)
@@ -214,13 +223,6 @@ export function useDashboardUsersState(locale: LandingLocale) {
     })
   }
 
-  function removeSelectedUsers() {
-    setTableUsers((currentUsers) =>
-      currentUsers.filter((user) => !selectedUserIds.has(user.id))
-    )
-    setSelectedUserIds(new Set())
-  }
-
   function removeUsers(userIds: number[]) {
     const selectedIds = new Set(userIds)
 
@@ -245,14 +247,13 @@ export function useDashboardUsersState(locale: LandingLocale) {
     isLoading,
     lastVisibleUser,
     loadError,
-    loadUsers,
     pageSize,
     pageStartIndex,
     patchUser,
     prependUser,
-    removeSelectedUsers,
     removeUser,
     removeUsers,
+    reloadUsers,
     safeCurrentPage,
     searchQuery,
     selectedUserCount,

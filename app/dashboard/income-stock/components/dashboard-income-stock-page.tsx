@@ -4,7 +4,11 @@ import { useState } from "react"
 import { PlusIcon } from "lucide-react"
 import { toast } from "sonner"
 
-import { createIncomingStock, deleteIncomingStock } from "@/api/incoming_stocks_api"
+import {
+  createIncomingStock,
+  deleteIncomingStock,
+  type IncomingStockRequestDTO,
+} from "@/api/incoming_stocks_api"
 import { useConfirmAlertDialog } from "@/components/confirm-alert-dialog-provider"
 import { DashboardPage } from "@/components/dashboard/dashboard-page"
 import { useLandingLocale } from "@/components/landing-locale-provider"
@@ -18,7 +22,6 @@ import {
 } from "@/components/ui/empty"
 import type { IncomingStockResponseDTO } from "@/api/incoming_stocks_api"
 import { landingContent } from "@/lib/landing-content"
-import { dashboardContent } from "@/lib/dashboard-content"
 
 import { DashboardIncomeStockTable } from "./dashboard-income-stock-table"
 import { DashboardIncomeStockToolbar } from "./dashboard-income-stock-toolbar"
@@ -31,7 +34,6 @@ import { useDashboardIncomeStockState } from "./use-dashboard-income-stock-state
 export function DashboardIncomeStockPage() {
   const { locale } = useLandingLocale()
   const confirm = useConfirmAlertDialog()
-  const copy = landingContent[locale].dashboardProducts
   const userCopy = landingContent[locale].dashboardUsers
   const dialogCopy = incomeStockDialogCopy[locale]
   
@@ -78,12 +80,12 @@ export function DashboardIncomeStockPage() {
       await deleteIncomingStock(intake.id)
       removeIntake(intake.id)
       toast.success(dialogCopy.deleteSuccess)
-    } catch (err) {
-      toast.error(locale === "sw" ? "Imeshindikana kufuta uingizaji." : "Failed to delete stock intake.")
+    } catch {
+      toast.error(dialogCopy.deleteError)
     }
   }
 
-  async function handleCreateIntake(values: any) {
+  async function handleCreateIntake(values: IncomingStockRequestDTO) {
     const res = await createIncomingStock(values)
     prependIntake(res)
     setActiveDialog({ type: null })
@@ -104,7 +106,7 @@ export function DashboardIncomeStockPage() {
           <Card className="min-h-[auto_70vh] w-full rounded-lg border-border/60 bg-card/90 py-0 shadow-sm">
             <CardHeader className="flex w-full flex-col gap-3 border-b px-4 py-4 sm:px-6 xl:flex-row xl:items-center xl:justify-between">
               <DashboardIncomeStockToolbar
-                copy={copy}
+                copy={dialogCopy}
                 onPageSizeChange={updatePageSize}
                 onSearchQueryChange={updateSearchQuery}
                 onSortDirectionChange={updateSortDirection}
@@ -117,22 +119,18 @@ export function DashboardIncomeStockPage() {
             <CardContent className="pb-5">
               {isLoading ? (
                 <Empty className="flex min-h-64 flex-col gap-3">
-                  <EmptyTitle>{copy.showing}...</EmptyTitle>
-                  <EmptyDescription>{copy.loading}</EmptyDescription>
+                  <EmptyTitle>{dialogCopy.loadingTitle}</EmptyTitle>
+                  <EmptyDescription>{dialogCopy.loadingDescription}</EmptyDescription>
                 </Empty>
               ) : loadError ? (
                 <Empty className="flex min-h-64 flex-col gap-3">
-                  <EmptyTitle>{copy.loadErrorTitle}</EmptyTitle>
+                  <EmptyTitle>{dialogCopy.loadErrorTitle}</EmptyTitle>
                   <EmptyDescription>{loadError}</EmptyDescription>
                 </Empty>
               ) : tableIntakes.length === 0 ? (
                 <Empty className="flex min-h-64 flex-col gap-3">
-                  <EmptyTitle>
-                    {locale === "sw" ? "Hakuna uingizaji bado" : "No intakes yet"}
-                  </EmptyTitle>
-                  <EmptyDescription>
-                    {locale === "sw" ? "Sajili mzigo mpya ili kuanza kufuatilia stoo inayoingia." : "Record stock arrival to start tracking incoming items."}
-                  </EmptyDescription>
+                  <EmptyTitle>{dialogCopy.emptyTitle}</EmptyTitle>
+                  <EmptyDescription>{dialogCopy.emptyDescription}</EmptyDescription>
                   <EmptyContent>
                     <Button onClick={() => setActiveDialog({ type: "add" })} className="bg-orange-500 hover:bg-orange-600 text-white rounded-xl">
                       <PlusIcon data-icon="inline-start" />
@@ -142,8 +140,8 @@ export function DashboardIncomeStockPage() {
                 </Empty>
               ) : filteredIntakes.length === 0 ? (
                 <Empty className="flex min-h-64 flex-col gap-3">
-                  <EmptyTitle>{copy.noResultsTitle}</EmptyTitle>
-                  <EmptyDescription>{copy.noResultsDescription}</EmptyDescription>
+                  <EmptyTitle>{dialogCopy.noResultsTitle}</EmptyTitle>
+                  <EmptyDescription>{dialogCopy.noResultsDescription}</EmptyDescription>
                 </Empty>
               ) : (
                 <DashboardIncomeStockTable

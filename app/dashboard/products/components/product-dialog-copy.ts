@@ -47,6 +47,11 @@ export const productDialogCopy = {
     bulkCreate: "Create parts",
     bulkSuccess: (count: number) => `Successfully created ${count} parts.`,
     addRow: "Add product",
+    singleProduct: "Single Product",
+    bulkProducts: "Bulk Products",
+    keepOneRow: "Please keep at least one product row.",
+    rowLabel: "Row",
+    removePart: "Remove part",
     validation: {
       partNameRequired: "Enter the part name.",
       partNameLength: "Part name must be at least 2 characters.",
@@ -105,6 +110,11 @@ export const productDialogCopy = {
     bulkCreate: "Sajili spea",
     bulkSuccess: (count: number) => `Imefanikiwa kusajili spea ${count}.`,
     addRow: "Ongeza bidhaa",
+    singleProduct: "Bidhaa Moja",
+    bulkProducts: "Bidhaa kwa Pamoja",
+    keepOneRow: "Tafadhali acha angalau mstari mmoja wa bidhaa.",
+    rowLabel: "Mstari",
+    removePart: "Ondoa bidhaa",
     validation: {
       partNameRequired: "Weka jina la spea.",
       partNameLength: "Jina la spea liwe na angalau herufi 2.",

@@ -11,9 +11,10 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import type { UsersSortDirection } from "@/lib/types"
+import type { OutgoingDialogCopy } from "./outgoing-dialog-copy"
 
 type DashboardOutgoingToolbarProps = {
-  copy: any
+  copy: OutgoingDialogCopy
   onPageSizeChange: (value: number) => void
   onSearchQueryChange: (value: string) => void
   onSortDirectionChange: (value: UsersSortDirection) => void
@@ -38,7 +39,7 @@ export function DashboardOutgoingToolbar({
           id="outgoing-search"
           type="text"
           name="search"
-          placeholder={copy.searchPlaceholder ?? "Search dispatch..."}
+          placeholder={copy.searchPlaceholder}
           value={searchQuery}
           onChange={(event) => onSearchQueryChange(event.target.value)}
           containerClassName="min-w-52 flex-1"

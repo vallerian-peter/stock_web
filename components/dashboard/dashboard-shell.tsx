@@ -23,11 +23,12 @@ import {
   UserCircle2Icon,
   Users2Icon,
   User2Icon,
-  BellIcon,
   MenuIcon,
 } from "lucide-react"
 
 import { useLandingLocale } from "@/components/landing-locale-provider"
+import { NotificationsProvider } from "@/components/notifications/notifications-provider"
+import { NotificationsSheet } from "@/components/notifications/notifications-sheet"
 import { Logo } from "@/components/logo"
 import { Button } from "@/components/ui/button"
 import {
@@ -64,7 +65,6 @@ import {
 import { canAccessDashboardSection } from "@/lib/auth/role-access"
 import type { DashboardUser } from "@/lib/types"
 import { cn } from "@/lib/utils"
-import { Badge } from "../ui/badge"
 
 type DashboardShellProps = {
   children: React.ReactNode
@@ -424,34 +424,23 @@ function DashboardTopBar({ user }: { user: DashboardUser }) {
                 : copy.shell.collapseSidebar
           }
         >
-          {isMobile 
-            ? <MenuIcon /> 
-            : <PanelLeftIcon
-                className={cn(
+          {isMobile ? (
+            <MenuIcon />
+          ) : (
+            <PanelLeftIcon
+              className={cn(
                 "transition-transform",
                 !isMobile && state === "collapsed" && "rotate-180"
               )}
-            /> 
-          }
+            />
+          )}
         </Button>
 
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="hidden md:block">
             <LocaleToggle />
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="icon-lg"
-            className="relative z-0 bg-muted/20"
-            aria-label={copy.shell.notifications}
-          >
-            <BellIcon />
-            {/* <span className="absolute -top-0.5 left-6 size-2 rounded-full bg-orange-500" /> */}
-            <Badge className="absolute top-0 left-4 size-4 border-2 border-gray-100 px-2.5 text-[10px] dark:border-gray-900">
-              +9
-            </Badge>
-          </Button>
+          <NotificationsSheet />
           <div className="hidden sm:block">
             <AccountMenu user={user} />
           </div>
@@ -462,13 +451,16 @@ function DashboardTopBar({ user }: { user: DashboardUser }) {
 }
 
 function DashboardFooter() {
+  const { locale } = useLandingLocale()
+  const copy = dashboardContent[locale].shell
+
   return (
     <div className="sticky bottom-0 z-30 border-t border-border/60 bg-background/85 backdrop-blur-xl">
       <div className="flex flex-row items-center justify-between px-10 pt-3 pb-2 text-[11px]!">
         <span>
-          &copy;2026 <Logo />. All rights reserved
+          &copy;2026 <Logo />. {copy.rightsReserved}
         </span>
-        <span>Developed and Designed by Vallerian</span>
+        <span>{copy.developedBy}</span>
       </div>
     </div>
   )
@@ -476,15 +468,17 @@ function DashboardFooter() {
 
 export function DashboardShell({ children, user }: DashboardShellProps) {
   return (
-    <SidebarProvider defaultOpen>
-      <DashboardSidebar user={user} />
-      <SidebarInset className="min-h-auto min-w-0 bg-[radial-gradient(circle_at_top,_rgba(249,115,22,0.12),_transparent_32%),linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,250,252,0.96))] dark:bg-[radial-gradient(circle_at_top,_rgba(249,115,22,0.08),_transparent_28%),linear-gradient(180deg,rgba(9,9,11,0.96),rgba(18,18,22,0.98))]">
-        <DashboardTopBar user={user} />
-        <main className="flex min-w-0 flex-1 flex-col">
-          {children}
-          <DashboardFooter />
-        </main>
-      </SidebarInset>
-    </SidebarProvider>
+    <NotificationsProvider>
+      <SidebarProvider defaultOpen>
+        <DashboardSidebar user={user} />
+        <SidebarInset className="min-h-auto min-w-0 bg-[radial-gradient(circle_at_top,_rgba(249,115,22,0.12),_transparent_32%),linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,250,252,0.96))] dark:bg-[radial-gradient(circle_at_top,_rgba(249,115,22,0.08),_transparent_28%),linear-gradient(180deg,rgba(9,9,11,0.96),rgba(18,18,22,0.98))]">
+          <DashboardTopBar user={user} />
+          <main className="flex min-w-0 flex-1 flex-col">
+            {children}
+            <DashboardFooter />
+          </main>
+        </SidebarInset>
+      </SidebarProvider>
+    </NotificationsProvider>
   )
 }

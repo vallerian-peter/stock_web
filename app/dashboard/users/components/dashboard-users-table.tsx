@@ -105,7 +105,7 @@ export function DashboardUsersTable({
             <TableCell>{user.fullName ?? `${user.firstName} ${user.lastName}`} {isProtectedUser(user) ? `(${copy.you})` : null}</TableCell>
             <TableCell>{user.email}</TableCell>
             <TableCell>{user.phone}</TableCell>
-            <TableCell>{user.role.toUpperCase()}</TableCell>
+            <TableCell>{user.role === "admin" ? copy.admin : copy.user}</TableCell>
             <TableCell>
               {user.status === "Active" ? (
                 <Badge className="bg-green-500/20 text-green-800 dark:text-green-300 flex flex-row items-center justify-center gap-1">

@@ -74,7 +74,11 @@ export function useDashboardIncomeStockState(locale: LandingLocale) {
   })
 
   useEffect(() => {
-    void loadIntakes()
+    const timeoutId = window.setTimeout(() => {
+      void loadIntakes()
+    }, 0)
+
+    return () => window.clearTimeout(timeoutId)
   }, [])
 
   const filteredIntakes = useMemo(() => {
@@ -152,7 +156,6 @@ export function useDashboardIncomeStockState(locale: LandingLocale) {
     isLoading,
     lastVisibleIntake,
     loadError,
-    loadIntakes,
     pageSize,
     pageStartIndex,
     prependIntake,

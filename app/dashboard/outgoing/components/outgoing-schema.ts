@@ -6,7 +6,6 @@ export function createOutgoingSchema(messages: OutgoingDialogCopy["validation"])
   return z
     .object({
       dispatchNumber: z.string().trim().optional(),
-      recipientName: z.string().trim().optional(),
       purpose: z.string().min(1, messages.purposeRequired),
       dispatchedAt: z.string().min(1, messages.dispatchedAtRequired),
       notes: z.string().trim().optional(),
@@ -24,6 +23,7 @@ export function createOutgoingSchema(messages: OutgoingDialogCopy["validation"])
       paymentStatus: z.string().optional(),
       paymentMethod: z.string().optional(),
       amountPaid: z.number().min(0).optional(),
+      additionalAmount: z.number().min(0).optional(),
     })
     .superRefine((data, ctx) => {
       const isSale = data.purpose.toUpperCase() === "SALE"

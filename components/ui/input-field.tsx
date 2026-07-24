@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/input-group"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
+import { useUiCopy } from "@/components/ui/ui-copy"
 
 export type InputFieldProps = Omit<React.ComponentProps<"input">, "size"> & {
   labelText?: React.ReactNode
@@ -49,9 +50,12 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
     },
     ref
   ) => {
+    const copy = useUiCopy()
     const generatedId = useId()
     const inputId = id ?? generatedId
     const isPasswordField = type === "password"
+    const isDateField = type === "date"
+    const isDateTimeField = type === "datetime-local"
     const [isPasswordVisible, setIsPasswordVisible] = useState(false)
     const [capsLockOn, setCapsLockOn] = useState(false)
 
@@ -85,6 +89,16 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
       id: inputId,
       ref,
       type: resolvedType,
+      lang:
+        props.lang ??
+        (isDateField || isDateTimeField ? "en-GB" : undefined),
+      placeholder:
+        props.placeholder ??
+        (isDateField
+          ? "dd/mm/yyyy"
+          : isDateTimeField
+            ? "dd/mm/yyyy --:--"
+            : undefined),
       autoComplete: autoComplete ?? "off",
       "aria-invalid": Boolean(errorText),
       "aria-describedby": describedBy,
@@ -153,7 +167,7 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
                     variant="ghost"
                     size="icon-xs"
                     aria-label={
-                      isPasswordVisible ? "Hide password" : "Show password"
+                      isPasswordVisible ? copy.hidePassword : copy.showPassword
                     }
                     onClick={() =>
                       setIsPasswordVisible((currentState) => !currentState)
@@ -180,7 +194,7 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
             id={rulesMessageId}
             className="rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground"
           >
-            <p className="font-medium text-foreground">Rules to follow</p>
+            <p className="font-medium text-foreground">{copy.rulesToFollow}</p>
             <ul className="mt-1 list-disc space-y-1 pl-4">
               {rules.map((rule) => (
                 <li key={rule}>{rule}</li>
@@ -205,7 +219,7 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
             className="flex items-center gap-1 text-xs text-amber-600"
           >
             <AlertCircleIcon className="size-3.5" />
-            <span>Caps Lock is on.</span>
+            <span>{copy.capsLockOn}</span>
           </p>
         ) : null}
       </div>

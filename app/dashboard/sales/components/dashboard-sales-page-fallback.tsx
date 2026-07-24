@@ -1,16 +1,23 @@
+"use client"
+
 import { PlusIcon } from "lucide-react"
 
 import { DashboardPage } from "@/components/dashboard/dashboard-page"
+import { useLandingLocale } from "@/components/landing-locale-provider"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { salesDialogCopy } from "./sales-dialog-copy"
 
 export function DashboardSalesPageFallback() {
+  const { locale } = useLandingLocale()
+  const copy = salesDialogCopy[locale]
+
   return (
     <DashboardPage
       actions={
         <Button disabled>
           <PlusIcon data-icon="inline-start" />
-          Record sale
+          {copy.addBtn}
         </Button>
       }
     >

@@ -949,6 +949,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Checkbox } from "@/components/ui/checkbox"
+import {
+  DateInputField,
+  DateTimeInputField,
+} from "@/components/ui/date-input-field"
 import { Field, FieldLabel } from "@/components/ui/field"
 import { InputField } from "@/components/ui/input-field"
 import { Textarea } from "@/components/ui/textarea"
@@ -968,11 +973,32 @@ import {
 import type { PartResponseDTO } from "@/lib/dtos/part_dtos"
 import type { SalesDialogCopy } from "./sales-dialog-copy"
 import { Spinner } from "@/components/ui/spinner"
+import { useLandingLocale } from "@/components/landing-locale-provider"
 
 type SalesFormDialogProps = {
   copy: SalesDialogCopy
   onClose: () => void
-  onSubmit: (values: any) => Promise<void> | void
+  onSubmit: (values: SaleFormSubmitValues) => Promise<void> | void
+  initialValues?: Partial<SaleFormSubmitValues>
+}
+
+type SaleFormSubmitValues = {
+  saleNumber?: string
+  customerName: string
+  customerPhone?: string
+  isDebt: boolean
+  debtDueDate?: string
+  paymentStatus: string
+  paymentMethod: string
+  amountPaid: number
+  additionalAmount: number
+  soldAt: string
+  notes?: string
+  items: Array<{
+    partId: number
+    quantity: number
+    unitPrice: number
+  }>
 }
 
 interface SaleInlineRow {
@@ -988,44 +1014,72 @@ export function SalesFormDialog({
   copy,
   onClose,
   onSubmit,
+  initialValues,
 }: SalesFormDialogProps) {
-  const [saleNumber, setSaleNumber] = useState("")
-  const [customerName, setCustomerName] = useState("")
-  const [paymentStatus, setPaymentStatus] = useState("PAID")
-  const [paymentMethod, setPaymentMethod] = useState("CASH")
-  const [amountPaid, setAmountPaid] = useState<number | "">("")
+  const { locale } = useLandingLocale()
+  const numberLocale = locale === "sw" ? "sw-TZ" : "en-TZ"
+  const [saleNumber, setSaleNumber] = useState(initialValues?.saleNumber || "")
+  const [customerName, setCustomerName] = useState(initialValues?.customerName || "")
+  const [isDebt, setIsDebt] = useState(
+    initialValues?.isDebt ??
+      (initialValues ? initialValues.paymentStatus !== "PAID" : false)
+  )
+  const [customerPhone, setCustomerPhone] = useState(initialValues?.customerPhone || "")
+  const [debtDueDate, setDebtDueDate] = useState(initialValues?.debtDueDate || "")
+  const [debtAmountPaid, setDebtAmountPaid] = useState<number | "">(
+    initialValues?.isDebt ? initialValues.amountPaid ?? 0 : 0
+  )
+  const [paymentMethod, setPaymentMethod] = useState(initialValues?.paymentMethod || "CASH")
+  const [hasAdditionalAmount, setHasAdditionalAmount] = useState(
+    Number(initialValues?.additionalAmount || 0) > 0
+  )
+  const [additionalAmount, setAdditionalAmount] = useState<number | "">(
+    initialValues?.additionalAmount || 0
+  )
   const [soldAt, setSoldAt] = useState(() => {
+    if (initialValues?.soldAt) {
+      const initialDate = new Date(initialValues.soldAt)
+      initialDate.setMinutes(initialDate.getMinutes() - initialDate.getTimezoneOffset())
+      return initialDate.toISOString().slice(0, 16)
+    }
     const now = new Date()
     now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
     return now.toISOString().slice(0, 16)
   })
-  const [notes, setNotes] = useState("")
-  const [items, setItems] = useState<SaleInlineRow[]>([
-    {
-      localId: "initial-row",
-      partId: "",
-      partSearchText: "",
-      quantity: 1,
-      unitPrice: 0,
-      showDropdown: false,
-    },
-  ])
+  const [notes, setNotes] = useState(initialValues?.notes || "")
+  const [items, setItems] = useState<SaleInlineRow[]>(() =>
+    initialValues?.items?.length
+      ? initialValues.items.map((item, index) => ({
+          localId: `linked-sale-row-${index}`,
+          partId: String(item.partId),
+          partSearchText: "",
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          showDropdown: false,
+        }))
+      : [
+          {
+            localId: "initial-row",
+            partId: "",
+            partSearchText: "",
+            quantity: 1,
+            unitPrice: 0,
+            showDropdown: false,
+          },
+        ]
+  )
 
   const [catalogParts, setCatalogParts] = useState<PartResponseDTO[]>([])
-  const [isLoadingParts, setIsLoadingParts] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Fetch Parts Catalog on mount
   useEffect(() => {
     async function loadCatalog() {
       try {
-        setIsLoadingParts(true)
         const res = await getParts({ page: 1, perPage: 250 })
         setCatalogParts(res.data)
       } catch (err) {
         toast.error(getApiErrorMessage(err))
-      } finally {
-        setIsLoadingParts(false)
       }
     }
     void loadCatalog()
@@ -1063,7 +1117,16 @@ export function SalesFormDialog({
     )
   }
 
-  const grandTotal = items.reduce((acc, row) => acc + row.quantity * row.unitPrice, 0)
+  const productTotal = items.reduce((acc, row) => acc + row.quantity * row.unitPrice, 0)
+  const additionalAmountValue = hasAdditionalAmount ? Number(additionalAmount || 0) : 0
+  const grandTotal = productTotal + additionalAmountValue
+  const debtAmountPaidValue = Number(debtAmountPaid || 0)
+  const paymentStatus =
+    !isDebt || debtAmountPaidValue >= grandTotal
+      ? "PAID"
+      : debtAmountPaidValue > 0
+        ? "PARTIAL"
+        : "PENDING"
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -1098,18 +1161,47 @@ export function SalesFormDialog({
       const catalogItem = catalogParts.find((p) => p.id === parsed.partId)
       if (catalogItem && catalogItem.quantity < parsed.quantity) {
         toast.error(
-          `Insufficient stock for "${catalogItem.partName}". Available: ${catalogItem.quantity}`
+          `${copy.insufficientStock} "${catalogItem.partName}". ${copy.available}: ${catalogItem.quantity.toLocaleString(numberLocale)}`
         )
         return
       }
     }
 
+    if (Number.isNaN(additionalAmountValue) || additionalAmountValue < 0) {
+      toast.error(copy.validation.priceRequired)
+      return
+    }
+
+    if (isDebt && !customerName.trim()) {
+      toast.error(copy.validation.debtCustomerRequired)
+      return
+    }
+
+    if (isDebt && !customerPhone.trim()) {
+      toast.error(copy.validation.debtPhoneRequired)
+      return
+    }
+
+    if (
+      isDebt &&
+      (!Number.isFinite(debtAmountPaidValue) ||
+        debtAmountPaidValue < 0 ||
+        debtAmountPaidValue >= grandTotal)
+    ) {
+      toast.error(copy.validation.debtAmountInvalid)
+      return
+    }
+
     const payload = {
       saleNumber: saleNumber.trim() || undefined,
-      customerName: customerName.trim() || "Walk-in Customer",
+      customerName: customerName.trim() || copy.walkInCustomer,
+      customerPhone: isDebt ? customerPhone.trim() : undefined,
+      isDebt,
+      debtDueDate: isDebt && debtDueDate ? debtDueDate : undefined,
       paymentStatus,
       paymentMethod,
-      amountPaid: amountPaid === "" ? grandTotal : Number(amountPaid),
+      amountPaid: isDebt ? debtAmountPaidValue : grandTotal,
+      additionalAmount: additionalAmountValue,
       soldAt: new Date(soldAt).toISOString(),
       notes: notes.trim() || undefined,
       items: parsedItems,
@@ -1144,13 +1236,14 @@ export function SalesFormDialog({
               labelText={copy.customerName}
               placeholder={copy.customerPlaceholder}
               value={customerName}
+              required={isDebt}
               disabled={isSubmitting}
               onChange={(e) => setCustomerName(e.target.value)}
             />
 
             <Field>
               <FieldLabel>{copy.paymentStatus}</FieldLabel>
-              <Select value={paymentStatus} onValueChange={(val) => val && setPaymentStatus(val)}>
+              <Select value={paymentStatus} disabled>
                 <SelectTrigger className="h-9 w-full rounded-xl bg-background border-border">
                   <SelectValue />
                 </SelectTrigger>
@@ -1177,17 +1270,63 @@ export function SalesFormDialog({
             </Field>
           </div>
 
-          {/* Sale number / sold-at — stack on mobile */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <InputField
-              type="number"
-              labelText={copy.amountPaid}
-              placeholder={`Default: TZS ${grandTotal.toLocaleString()}`}
-              value={amountPaid}
-              disabled={isSubmitting}
-              onChange={(e) => setAmountPaid(e.target.value ? Number(e.target.value) : "")}
-            />
+          <div className="rounded-xl border border-dashed border-border bg-muted/30 px-3 py-3 text-xs">
+            <label className="flex items-start gap-2">
+              <Checkbox
+                checked={isDebt}
+                disabled={isSubmitting}
+                onCheckedChange={(checked) => {
+                  const nextIsDebt = checked === true
+                  setIsDebt(nextIsDebt)
+                  if (!nextIsDebt) {
+                    setCustomerPhone("")
+                    setDebtDueDate("")
+                    setDebtAmountPaid(0)
+                  }
+                }}
+                className="mt-0.5"
+              />
+              <span className="space-y-0.5">
+                <span className="block font-medium text-foreground">{copy.debtToggle}</span>
+                <span className="block text-muted-foreground">{copy.debtDescription}</span>
+              </span>
+            </label>
 
+            {isDebt ? (
+              <div className="mt-4 grid gap-4 sm:grid-cols-3">
+                <InputField
+                  type="tel"
+                  labelText={copy.customerPhone}
+                  placeholder={copy.customerPhonePlaceholder}
+                  value={customerPhone}
+                  required
+                  disabled={isSubmitting}
+                  onChange={(event) => setCustomerPhone(event.target.value)}
+                />
+                <DateInputField
+                  labelText={copy.debtDueDate}
+                  value={debtDueDate}
+                  disabled={isSubmitting}
+                  onValueChange={setDebtDueDate}
+                />
+                <InputField
+                  type="number"
+                  min="0"
+                  max={grandTotal}
+                  step="0.01"
+                  labelText={copy.debtAmountPaid}
+                  value={debtAmountPaid}
+                  disabled={isSubmitting}
+                  onChange={(event) =>
+                    setDebtAmountPaid(event.target.value ? Number(event.target.value) : 0)
+                  }
+                />
+              </div>
+            ) : null}
+          </div>
+
+          {/* Sale number / sold-at — stack on mobile */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <InputField
               labelText={copy.saleNumber}
               placeholder={copy.saleNumberPlaceholder}
@@ -1196,14 +1335,54 @@ export function SalesFormDialog({
               onChange={(e) => setSaleNumber(e.target.value)}
             />
 
-            <InputField
-              type="datetime-local"
+            <DateTimeInputField
               labelText={copy.soldAt}
               value={soldAt}
               required
               disabled={isSubmitting}
-              onChange={(e) => setSoldAt(e.target.value)}
+              onValueChange={setSoldAt}
             />
+          </div>
+
+          <div className="rounded-xl border border-dashed border-border bg-muted/30 px-3 py-2 text-xs">
+            <label className="flex items-start gap-2">
+              <Checkbox
+                checked={hasAdditionalAmount}
+                disabled={isSubmitting}
+                onCheckedChange={(checked) => {
+                  const isChecked = checked === true
+                  setHasAdditionalAmount(isChecked)
+                  if (!isChecked) {
+                    setAdditionalAmount(0)
+                  }
+                }}
+                className="mt-0.5"
+              />
+              <span className="space-y-0.5">
+                <span className="block font-medium text-foreground">
+                  {copy.additionalAmountToggle}
+                </span>
+                <span className="block text-muted-foreground">
+                  {copy.additionalAmountDescription}
+                </span>
+              </span>
+            </label>
+
+            {hasAdditionalAmount ? (
+              <div className="mt-3">
+                <InputField
+                  type="number"
+                  min="0"
+                  labelText={copy.additionalAmount}
+                  placeholder={copy.additionalAmountPlaceholder}
+                  value={additionalAmount}
+                  disabled={isSubmitting}
+                  onChange={(e) =>
+                    setAdditionalAmount(e.target.value ? Number(e.target.value) : 0)
+                  }
+                />
+              </div>
+            ) : null}
           </div>
 
           <Field>
@@ -1249,7 +1428,8 @@ export function SalesFormDialog({
                                     {matchingPart.partName}
                                   </span>
                                   <span className="text-[10px] text-muted-foreground">
-                                    SKU: {matchingPart.partNumber} | Available: {matchingPart.quantity}
+                                    {copy.skuLabel}: {matchingPart.partNumber} | {copy.available}:{" "}
+                                    {matchingPart.quantity.toLocaleString(numberLocale)}
                                   </span>
                                 </div>
                                 <Button
@@ -1317,7 +1497,8 @@ export function SalesFormDialog({
                                           {part.partName}
                                         </span>
                                         <span className="text-[10px] text-muted-foreground">
-                                          No: {part.partNumber} | Current Stock: {part.quantity}
+                                          {copy.partNumberLabel}: {part.partNumber} | {copy.currentStock}:{" "}
+                                          {part.quantity.toLocaleString(numberLocale)}
                                         </span>
                                       </button>
                                     ))}
@@ -1349,7 +1530,7 @@ export function SalesFormDialog({
                           />
                         </TableCell>
                         <TableCell className="text-right font-semibold text-xs text-foreground py-4 px-3">
-                          TZS {(row.quantity * row.unitPrice).toLocaleString()}
+                          TZS {(row.quantity * row.unitPrice).toLocaleString(numberLocale)}
                         </TableCell>
                         <TableCell className="text-center">
                           <Button
@@ -1358,6 +1539,7 @@ export function SalesFormDialog({
                             size="icon"
                             className="size-8 rounded-lg text-muted-foreground hover:bg-red-500/10 hover:text-red-600"
                             onClick={() => removeRow(row.localId)}
+                            aria-label={copy.removePart}
                           >
                             <Trash2Icon className="size-4" />
                           </Button>
@@ -1383,9 +1565,8 @@ export function SalesFormDialog({
               {copy.addRowBtn}
             </Button>
             <div className="text-right">
-              <span className="text-xs text-muted-foreground">Grand Total: </span>
               <span className="text-lg font-bold text-orange-600 dark:text-orange-400 ml-1.5">
-                TZS {grandTotal.toLocaleString()}
+                {copy.grandTotal}: TZS {grandTotal.toLocaleString(numberLocale)}
               </span>
             </div>
           </div>

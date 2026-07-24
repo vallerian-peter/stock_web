@@ -43,6 +43,8 @@ export const userDialogCopy = {
     deleteSuccess: (name: string) => `${name} was deleted.`,
     bulkDeleteSuccess: (count: number) =>
       `${count} selected users were deleted.`,
+    protectedUserDelete: "Admin users can only be edited. You cannot delete them.",
+    protectedUsersBulkDelete: "Admin users cannot be deleted.",
     validation: {
       firstNameRequired: "Enter the first name.",
       firstNameLength: "First name must be at least 2 characters.",
@@ -101,6 +103,8 @@ export const userDialogCopy = {
     deleteSuccess: (name: string) => `${name} amefutwa.`,
     bulkDeleteSuccess: (count: number) =>
       `Watumiaji ${count} waliochaguliwa wamefutwa.`,
+    protectedUserDelete: "Msimamizi anaweza kuhaririwa tu. Huwezi kumfuta.",
+    protectedUsersBulkDelete: "Wasimamizi hawawezi kufutwa.",
     validation: {
       firstNameRequired: "Weka jina la kwanza.",
       firstNameLength: "Jina la kwanza liwe na angalau herufi 2.",

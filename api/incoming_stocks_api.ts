@@ -11,6 +11,10 @@ export type IncomingStockItemRequestDTO = {
 export type IncomingStockRequestDTO = {
   invoiceNumber?: string
   supplierName?: string
+  supplierPhone?: string
+  isDebt?: boolean
+  debtDueDate?: string
+  amountPaid?: number
   receivedAt: string
   notes?: string
   items: IncomingStockItemRequestDTO[]
@@ -36,6 +40,7 @@ export type IncomingStockResponseDTO = {
   totalAmount: string
   notes: string | null
   createdAt: string
+  payableId: number | null
   items: IncomingStockItemResponseDTO[]
 }
 

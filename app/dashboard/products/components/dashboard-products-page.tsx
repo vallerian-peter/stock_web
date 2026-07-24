@@ -150,7 +150,9 @@ export function DashboardPartsPage() {
     values: ProductFormValues,
     imageFile: File | null
   ) {
-    const createdPart = await createPart(mapFormValuesToRequest(values, imageFile))
+    const createdPart = await createPart(
+      mapFormValuesToRequest(values, imageFile)
+    )
 
     prependPart(createdPart)
     setActiveDialog(null)
@@ -204,12 +206,12 @@ export function DashboardPartsPage() {
               <DropdownMenuItem
                 onClick={() => setActiveDialog({ type: "add" })}
               >
-                {locale === "sw" ? "Bidhaa Moja" : "Single Product"}
+                {dialogCopy.singleProduct}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => setActiveDialog({ type: "bulk-add" })}
               >
-                {locale === "sw" ? "Bidhaa kwa Pamoja" : "Bulk Products"}
+                {dialogCopy.bulkProducts}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -220,27 +222,31 @@ export function DashboardPartsPage() {
             {[
               {
                 label: copy.totalParts,
-                value: stats.totalParts,
+                value: `${stats.totalPartCount.toLocaleString()} (${stats.totalQuantity.toLocaleString()})`,
                 Icon: Package2Icon,
-                colorClass: "border-zinc-200/70 bg-zinc-50 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900",
+                colorClass:
+                  "border-zinc-200/70 bg-zinc-50 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900",
               },
               {
                 label: copy.inStock,
                 value: stats.inStock,
                 Icon: Layers3Icon,
-                colorClass: "border-green-200/70 bg-green-50 text-green-600 dark:border-green-900 dark:bg-green-950/40",
+                colorClass:
+                  "border-green-200/70 bg-green-50 text-green-600 dark:border-green-900 dark:bg-green-950/40",
               },
               {
                 label: copy.lowStock,
                 value: stats.lowStock,
                 Icon: TriangleAlertIcon,
-                colorClass: "border-amber-200/70 bg-amber-50 text-amber-600 dark:border-amber-900 dark:bg-amber-950/40",
+                colorClass:
+                  "border-amber-200/70 bg-amber-50 text-amber-600 dark:border-amber-900 dark:bg-amber-950/40",
               },
               {
                 label: copy.outOfStock,
                 value: stats.outOfStock,
                 Icon: CircleAlertIcon,
-                colorClass: "border-red-200/70 bg-red-50 text-red-600 dark:border-red-900 dark:bg-red-950/40",
+                colorClass:
+                  "border-red-200/70 bg-red-50 text-red-600 dark:border-red-900 dark:bg-red-950/40",
               },
             ].map((item) => (
               <Card
@@ -329,14 +335,10 @@ export function DashboardPartsPage() {
                   formatCreatedAt={formatCreatedAt}
                   formatPrice={formatPrice}
                   onDeletePart={handleDeletePart}
-                  onEditPart={(part) =>
-                    setActiveDialog({ type: "edit", part })
-                  }
+                  onEditPart={(part) => setActiveDialog({ type: "edit", part })}
                   onTogglePartSelection={togglePartSelection}
                   onToggleVisibleParts={toggleVisibleParts}
-                  onViewPart={(part) =>
-                    setActiveDialog({ type: "view", part })
-                  }
+                  onViewPart={(part) => setActiveDialog({ type: "view", part })}
                   pageStartIndex={pageStartIndex}
                   selectedPartIds={selectedPartIds}
                   someVisiblePartsSelected={someVisiblePartsSelected}
@@ -389,7 +391,12 @@ export function DashboardPartsPage() {
           part={activeDialog.part}
           onClose={() => setActiveDialog(null)}
           onSubmit={(values, imageFile) =>
-            handleUpdatePart(activeDialog.part.id, values, imageFile, activeDialog.part)
+            handleUpdatePart(
+              activeDialog.part.id,
+              values,
+              imageFile,
+              activeDialog.part
+            )
           }
         />
       ) : null}

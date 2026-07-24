@@ -13,6 +13,8 @@ import {
 import type { UserResponseDTO } from "@/lib/dtos/user_dtos"
 
 import type { UserDialogCopy } from "./user-dialog-copy"
+import { useLandingLocale } from "@/components/landing-locale-provider"
+import { toHumanForm } from "@/lib/formatters"
 
 type UserViewDialogProps = {
   copy: UserDialogCopy
@@ -21,13 +23,14 @@ type UserViewDialogProps = {
 }
 
 export function UserViewDialog({ copy, user, onClose }: UserViewDialogProps) {
+  const { locale } = useLandingLocale()
   const details = [
     [copy.firstName, user.firstName],
     [copy.lastName, user.lastName],
     [copy.email, user.email],
     [copy.phone, user.phone],
     [copy.role, user.role === "admin" ? copy.admin : copy.user],
-    [copy.createdAt, user.createdAt],
+    [copy.createdAt, toHumanForm(user.createdAt, locale)],
   ]
 
 

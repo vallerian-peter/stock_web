@@ -170,7 +170,7 @@ export default function HeroSection() {
                 className="ml-auto max-w-2xl"
               >
                 <CarouselContent className="-ml-3">
-                  {copy.products.cards.map((part) => (
+                  {copy.products.cards.map((part, index) => (
                     <CarouselItem
                       key={part.name}
                       className="basis-[78%] pl-3 sm:basis-1/2"
@@ -191,6 +191,7 @@ export default function HeroSection() {
                             src={part.image}
                             alt={part.name}
                             fill
+                            loading={index === 0 ? "eager" : "lazy"}
                             sizes="(max-width: 640px) 75vw, 320px"
                             className="object-contain drop-shadow-[0_18px_20px_rgba(0,0,0,0.4)] transition-transform duration-500 group-hover:scale-105"
                           />

@@ -6,6 +6,10 @@ export function createIncomeStockSchema(messages: IncomeStockDialogCopy["validat
   return z.object({
     invoiceNumber: z.string().trim().optional(),
     supplierName: z.string().trim().min(1, messages.supplierRequired),
+    supplierPhone: z.string().trim().optional(),
+    isDebt: z.boolean().optional(),
+    debtDueDate: z.string().optional(),
+    amountPaid: z.number().min(0).optional(),
     receivedAt: z.string().min(1, messages.receivedAtRequired),
     notes: z.string().trim().optional(),
     items: z

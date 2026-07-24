@@ -11,9 +11,10 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import type { UsersSortDirection } from "@/lib/types"
+import type { IncomeStockDialogCopy } from "./income-stock-dialog-copy"
 
 type DashboardIncomeStockToolbarProps = {
-  copy: any
+  copy: IncomeStockDialogCopy
   onPageSizeChange: (value: number) => void
   onSearchQueryChange: (value: string) => void
   onSortDirectionChange: (value: UsersSortDirection) => void
@@ -38,7 +39,7 @@ export function DashboardIncomeStockToolbar({
           id="intakes-search"
           type="text"
           name="search"
-          placeholder={copy.searchPlaceholder ?? "Search shipment..."}
+          placeholder={copy.searchPlaceholder}
           value={searchQuery}
           onChange={(event) => onSearchQueryChange(event.target.value)}
           containerClassName="min-w-52 flex-1"

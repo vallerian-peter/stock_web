@@ -11,9 +11,9 @@ import {
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import { useLandingLocale } from "@/components/landing-locale-provider"
 import type { OutgoingStockResponseDTO } from "@/api/outgoing_stocks_api"
 import type { OutgoingDialogCopy } from "./outgoing-dialog-copy"
-import { cn } from "@/lib/utils"
 
 type OutgoingViewDialogProps = {
   copy: OutgoingDialogCopy
@@ -26,11 +26,41 @@ export function OutgoingViewDialog({
   dispatch,
   onClose,
 }: OutgoingViewDialogProps) {
-  const isSale = dispatch.purpose.toUpperCase() === "SALE"
+  const { locale } = useLandingLocale()
+  const numberLocale = locale === "sw" ? "sw-TZ" : "en-TZ"
+
+  function localizePurpose(purpose: string) {
+    const purposes: Record<string, string> = {
+      SALE: copy.purposeSale,
+      DAMAGED: copy.purposeDamaged,
+      RETURN: copy.purposeReturn,
+    }
+    return purposes[purpose.toUpperCase()] || purpose
+  }
+
+  function localizePaymentStatus(status: string) {
+    const statuses: Record<string, string> = {
+      PAID: copy.statusPaid,
+      PENDING: copy.statusPending,
+      PARTIAL: copy.statusPartial,
+    }
+    return statuses[status.toUpperCase()] || status
+  }
+
+  function localizePaymentMethod(method?: string | null) {
+    if (!method) return "—"
+
+    const methods: Record<string, string> = {
+      CASH: copy.methodCash,
+      MOBILE_MONEY: copy.methodMobileMoney,
+      BANK_TRANSFER: copy.methodBankTransfer,
+    }
+    return methods[method.toUpperCase()] || method
+  }
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-h-[90vh] w-[90vw] max-w-2xl overflow-y-auto rounded-2xl border border-border bg-card p-6 shadow-xl">
+      <DialogContent className="w-[95vw] sm:w-full sm:max-w-2xl md:max-w-4xl lg:max-w-6xl xl:max-w-7xl max-h-[92vh] overflow-y-auto rounded-2xl border border-border bg-card p-4 sm:p-6 shadow-xl">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold text-foreground">
             {copy.viewTitle}
@@ -46,12 +76,8 @@ export function OutgoingViewDialog({
             <div>
               <span className="font-semibold text-muted-foreground">{copy.purpose}: </span>
               <Badge className="ml-1 bg-orange-500/10 text-orange-700 dark:text-orange-300 border-0">
-                {dispatch.purpose}
+                {localizePurpose(dispatch.purpose)}
               </Badge>
-            </div>
-            <div>
-              <span className="font-semibold text-muted-foreground">{isSale ? copy.customerName : copy.recipientName}: </span>
-              <span className="font-medium text-foreground ml-1">{dispatch.recipientName || "—"}</span>
             </div>
             <div>
               <span className="font-semibold text-muted-foreground">{copy.dispatchNumber}: </span>
@@ -60,7 +86,7 @@ export function OutgoingViewDialog({
             <div>
               <span className="font-semibold text-muted-foreground">{copy.dispatchedAt}: </span>
               <span className="font-medium text-foreground ml-1">
-                {new Date(dispatch.dispatchedAt).toLocaleString()}
+                {new Date(dispatch.dispatchedAt).toLocaleString(numberLocale)}
               </span>
             </div>
             <div>
@@ -87,23 +113,25 @@ export function OutgoingViewDialog({
                 <div>
                   <span className="font-semibold text-muted-foreground">{copy.paymentStatus}: </span>
                   <Badge className="ml-1 bg-green-500/25 text-green-800 dark:text-green-300 border-0">
-                    {dispatch.sale.paymentStatus}
+                    {localizePaymentStatus(dispatch.sale.paymentStatus)}
                   </Badge>
                 </div>
                 <div>
                   <span className="font-semibold text-muted-foreground">{copy.paymentMethod}: </span>
-                  <span className="font-medium text-foreground ml-1">{dispatch.sale.paymentMethod || "—"}</span>
-                </div>
-                <div>
-                  <span className="font-semibold text-muted-foreground">Amount Paid: </span>
-                  <span className="font-semibold text-foreground ml-1">
-                    TZS {Number(dispatch.sale.amountPaid).toLocaleString()}
+                  <span className="font-medium text-foreground ml-1">
+                    {localizePaymentMethod(dispatch.sale.paymentMethod)}
                   </span>
                 </div>
                 <div>
-                  <span className="font-semibold text-muted-foreground">Total Sale Value: </span>
+                  <span className="font-semibold text-muted-foreground">{copy.amountPaid}: </span>
+                  <span className="font-semibold text-foreground ml-1">
+                    TZS {Number(dispatch.sale.amountPaid).toLocaleString(numberLocale)}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-muted-foreground">{copy.totalSaleValue}: </span>
                   <span className="font-bold text-green-700 dark:text-green-400 ml-1">
-                    TZS {Number(dispatch.sale.totalAmount).toLocaleString()}
+                    TZS {Number(dispatch.sale.totalAmount).toLocaleString(numberLocale)}
                   </span>
                 </div>
               </div>
@@ -116,7 +144,7 @@ export function OutgoingViewDialog({
               <TableHeader className="bg-muted/40">
                 <TableRow>
                   <TableHead className="w-10">#</TableHead>
-                  <TableHead>Part Name</TableHead>
+                  <TableHead>{copy.partNameLabel}</TableHead>
                   <TableHead className="w-24 text-right">{copy.qtyLabel}</TableHead>
                 </TableRow>
               </TableHeader>
@@ -129,7 +157,9 @@ export function OutgoingViewDialog({
                     <TableCell>
                       <div className="flex flex-col">
                         <span className="font-semibold text-foreground text-xs">{item.partName}</span>
-                        <span className="text-[9px] text-muted-foreground">No: {item.partNumber}</span>
+                        <span className="text-[9px] text-muted-foreground">
+                          {copy.partNumberLabel}: {item.partNumber}
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell className="text-right text-xs">{item.quantity}</TableCell>
@@ -140,7 +170,8 @@ export function OutgoingViewDialog({
           </div>
 
           <div className="text-xs text-muted-foreground">
-            Total parts dispatched: {dispatch.items.reduce((acc, i) => acc + i.quantity, 0)}
+            {copy.totalPartsDispatchedByQuantity}:{" "}
+            {dispatch.items.reduce((acc, item) => acc + item.quantity, 0).toLocaleString(numberLocale)}
           </div>
         </div>
 

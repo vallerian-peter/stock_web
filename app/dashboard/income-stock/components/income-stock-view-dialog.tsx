@@ -9,6 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { useLandingLocale } from "@/components/landing-locale-provider"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import type { IncomingStockResponseDTO } from "@/api/incoming_stocks_api"
 import type { IncomeStockDialogCopy } from "./income-stock-dialog-copy"
@@ -24,6 +25,9 @@ export function IncomeStockViewDialog({
   intake,
   onClose,
 }: IncomeStockViewDialogProps) {
+  const { locale } = useLandingLocale()
+  const numberLocale = locale === "sw" ? "sw-TZ" : "en-TZ"
+
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-h-[90vh] w-[90vw] max-w-2xl overflow-y-auto rounded-2xl border border-border bg-card p-6 shadow-xl">
@@ -50,7 +54,7 @@ export function IncomeStockViewDialog({
             <div>
               <span className="font-semibold text-muted-foreground">{copy.receivedAt}: </span>
               <span className="font-medium text-foreground ml-1">
-                {new Date(intake.receivedAt).toLocaleString()}
+                {new Date(intake.receivedAt).toLocaleString(numberLocale)}
               </span>
             </div>
             <div>
@@ -73,7 +77,7 @@ export function IncomeStockViewDialog({
               <TableHeader className="bg-muted/40">
                 <TableRow>
                   <TableHead className="w-10">#</TableHead>
-                  <TableHead>Part Name</TableHead>
+                  <TableHead>{copy.partNameLabel}</TableHead>
                   <TableHead className="w-24 text-right">{copy.qtyLabel}</TableHead>
                   <TableHead className="w-32 text-right">{copy.unitCostLabel}</TableHead>
                   <TableHead className="w-36 text-right">{copy.subtotalLabel}</TableHead>
@@ -88,15 +92,17 @@ export function IncomeStockViewDialog({
                     <TableCell>
                       <div className="flex flex-col">
                         <span className="font-semibold text-foreground text-xs">{item.partName}</span>
-                        <span className="text-[9px] text-muted-foreground">No: {item.partNumber}</span>
+                        <span className="text-[9px] text-muted-foreground">
+                          {copy.partNumberLabel}: {item.partNumber}
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell className="text-right text-xs">{item.quantity}</TableCell>
                     <TableCell className="text-right text-xs">
-                      TZS {Number(item.unitCost).toLocaleString()}
+                      TZS {Number(item.unitCost).toLocaleString(numberLocale)}
                     </TableCell>
                     <TableCell className="text-right font-semibold text-xs text-foreground">
-                      TZS {Number(item.subtotal).toLocaleString()}
+                      TZS {Number(item.subtotal).toLocaleString(numberLocale)}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -106,12 +112,13 @@ export function IncomeStockViewDialog({
 
           <div className="flex justify-between items-center">
             <div className="text-xs text-muted-foreground">
-              Total amount of parts: {intake.items.reduce((acc, i) => acc + i.quantity, 0)}
+              {copy.totalPartsByQuantity}:{" "}
+              {intake.items.reduce((acc, item) => acc + item.quantity, 0).toLocaleString(numberLocale)}
             </div>
             <div className="text-right">
-              <span className="text-sm font-medium text-muted-foreground">Grand Total: </span>
+              <span className="text-sm font-medium text-muted-foreground">{copy.grandTotal}: </span>
               <span className="text-lg font-bold text-orange-600 dark:text-orange-400 ml-1.5">
-                TZS {Number(intake.totalAmount).toLocaleString()}
+                TZS {Number(intake.totalAmount).toLocaleString(numberLocale)}
               </span>
             </div>
           </div>

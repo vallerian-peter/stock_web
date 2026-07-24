@@ -8,6 +8,7 @@ import useEmblaCarousel, {
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
+import { useUiCopy } from "@/components/ui/ui-copy"
 
 type CarouselApi = UseEmblaCarouselType[1]
 type UseCarouselParameters = Parameters<typeof useEmblaCarousel>
@@ -180,6 +181,7 @@ function CarouselPrevious({
   ...props
 }: React.ComponentProps<typeof Button>) {
   const { orientation, scrollPrev, canScrollPrev } = useCarousel()
+  const copy = useUiCopy()
 
   return (
     <Button
@@ -198,7 +200,7 @@ function CarouselPrevious({
       {...props}
     >
       <ChevronLeftIcon />
-      <span className="sr-only">Previous slide</span>
+      <span className="sr-only">{copy.previousSlide}</span>
     </Button>
   )
 }
@@ -210,6 +212,7 @@ function CarouselNext({
   ...props
 }: React.ComponentProps<typeof Button>) {
   const { orientation, scrollNext, canScrollNext } = useCarousel()
+  const copy = useUiCopy()
 
   return (
     <Button
@@ -228,7 +231,7 @@ function CarouselNext({
       {...props}
     >
       <ChevronRightIcon />
-      <span className="sr-only">Next slide</span>
+      <span className="sr-only">{copy.nextSlide}</span>
     </Button>
   )
 }

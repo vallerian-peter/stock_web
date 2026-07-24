@@ -48,7 +48,7 @@ export function DashboardCategoriesPage() {
     formatCreatedAt,
     isLoading,
     lastVisibleCategory,
-    loadCategories,
+    reloadCategories,
     loadError,
     pageSize,
     pageStartIndex,
@@ -171,7 +171,7 @@ export function DashboardCategoriesPage() {
                     <EmptyTitle>{copy.loadErrorTitle}</EmptyTitle>
                     <EmptyDescription>{loadError}</EmptyDescription>
                     <EmptyContent>
-                      <Button onClick={() => void loadCategories()}>
+                      <Button onClick={reloadCategories}>
                         {copy.retry}
                       </Button>
                     </EmptyContent>

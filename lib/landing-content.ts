@@ -124,6 +124,8 @@ export const landingContent = {
       email: "Email",
       phone: "Phone",
       role: "Role",
+      admin: "Administrator",
+      user: "User",
       createdAt: "Created at",
       actions: "Actions",
       of: "of",
@@ -168,8 +170,7 @@ export const landingContent = {
       editCategory: "Edit category",
       deleteCategory: "Delete category",
       emptyTitle: "No categories yet",
-      emptyDescription:
-        "Add a category to keep products and parts organized.",
+      emptyDescription: "Add a category to keep products and parts organized.",
       noResultsTitle: "No matching categories",
       noResultsDescription: "Try changing your search term.",
       addCategory: "Add category",
@@ -210,12 +211,11 @@ export const landingContent = {
       editPart: "Edit part",
       deletePart: "Delete part",
       emptyTitle: "No parts yet",
-      emptyDescription:
-        "Add a part to start tracking inventory records.",
+      emptyDescription: "Add a part to start tracking inventory records.",
       noResultsTitle: "No matching parts",
       noResultsDescription: "Try changing your search or filter selection.",
       addPart: "Add part",
-      totalParts: "Total parts (By quantity)",
+      totalParts: "Total Parts (Quantities)",
     },
     footer: {
       description:
@@ -354,6 +354,8 @@ export const landingContent = {
       email: "Barua pepe",
       phone: "Simu",
       role: "Wajibu",
+      admin: "Msimamizi",
+      user: "Mtumiaji",
       createdAt: "Tarehe ya kuundwa",
       actions: "Vitendo",
       of: "kati ya",
@@ -398,8 +400,7 @@ export const landingContent = {
       editCategory: "Hariri kundi",
       deleteCategory: "Futa kundi",
       emptyTitle: "Hakuna makundi bado",
-      emptyDescription:
-        "Ongeza kundi ili kupanga bidhaa na spea vizuri.",
+      emptyDescription: "Ongeza kundi ili kupanga bidhaa na spea vizuri.",
       noResultsTitle: "Hakuna makundi yaliyopatikana",
       noResultsDescription: "Badilisha neno la utafutaji.",
       addCategory: "Ongeza kundi",
@@ -440,12 +441,11 @@ export const landingContent = {
       editPart: "Hariri spea",
       deletePart: "Futa spea",
       emptyTitle: "Hakuna spea bado",
-      emptyDescription:
-        "Ongeza spea ili kuanza kufuatilia stoo.",
+      emptyDescription: "Ongeza spea ili kuanza kufuatilia stoo.",
       noResultsTitle: "Hakuna spea zilizopatikana",
       noResultsDescription: "Badilisha utafutaji au kichujio chako.",
       addPart: "Ongeza spea",
-      totalParts: "Jumla ya Spea (Kwa idadi)",
+      totalParts: "Jumla ya Spea (Idadi)",
     },
     footer: {
       description:

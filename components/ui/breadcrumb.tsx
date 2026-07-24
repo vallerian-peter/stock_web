@@ -1,14 +1,19 @@
+"use client"
+
 import * as React from "react"
 import { mergeProps } from "@base-ui/react/merge-props"
 import { useRender } from "@base-ui/react/use-render"
 
 import { cn } from "@/lib/utils"
 import { ChevronRightIcon, MoreHorizontalIcon } from "lucide-react"
+import { useUiCopy } from "@/components/ui/ui-copy"
 
 function Breadcrumb({ className, ...props }: React.ComponentProps<"nav">) {
+  const copy = useUiCopy()
+
   return (
     <nav
-      aria-label="breadcrumb"
+      aria-label={copy.breadcrumb}
       data-slot="breadcrumb"
       className={cn(className)}
       {...props}
@@ -96,6 +101,8 @@ function BreadcrumbEllipsis({
   className,
   ...props
 }: React.ComponentProps<"span">) {
+  const copy = useUiCopy()
+
   return (
     <span
       data-slot="breadcrumb-ellipsis"
@@ -109,7 +116,7 @@ function BreadcrumbEllipsis({
     >
       <MoreHorizontalIcon
       />
-      <span className="sr-only">More</span>
+      <span className="sr-only">{copy.more}</span>
     </span>
   )
 }

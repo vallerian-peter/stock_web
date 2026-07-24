@@ -13,7 +13,11 @@ export const AUTH_SESSION_CHANGE_EVENT = "stock-auth-session-change"
 
 const AUTH_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
 
-function writeCookie(name: string, value: string, maxAge = AUTH_COOKIE_MAX_AGE) {
+function writeCookie(
+  name: string,
+  value: string,
+  maxAge = AUTH_COOKIE_MAX_AGE
+) {
   if (typeof window === "undefined") {
     return
   }
@@ -66,9 +70,22 @@ export function persistAuthSession(response: AuthResponseDTO) {
     `${response.user.firstName} ${response.user.lastName}`.trim()
 
   writeCookie(ACCESS_TOKEN_COOKIE, response.token)
-  writeCookie(DASHBOARD_ROLE_COOKIE, mapApiRoleToDashboardRole(response.user.role))
+  writeCookie(
+    DASHBOARD_ROLE_COOKIE,
+    mapApiRoleToDashboardRole(response.user.role)
+  )
   writeCookie(DASHBOARD_USER_NAME_COOKIE, fullName)
   writeCookie(DASHBOARD_USER_EMAIL_COOKIE, response.user.email)
+  window.dispatchEvent(new Event(AUTH_SESSION_CHANGE_EVENT))
+}
+
+export function updateAuthSessionUser(user: AuthResponseDTO["user"]) {
+  const fullName =
+    user.fullName?.trim() || `${user.firstName} ${user.lastName}`.trim()
+
+  writeCookie(DASHBOARD_ROLE_COOKIE, mapApiRoleToDashboardRole(user.role))
+  writeCookie(DASHBOARD_USER_NAME_COOKIE, fullName)
+  writeCookie(DASHBOARD_USER_EMAIL_COOKIE, user.email)
   window.dispatchEvent(new Event(AUTH_SESSION_CHANGE_EVENT))
 }
 
@@ -104,9 +121,7 @@ export function getClientDashboardUser(): DashboardUser | null {
     (role === "ADMIN" ? "Valler Admin" : "Valler User")
   const email =
     readCookie(DASHBOARD_USER_EMAIL_COOKIE) ??
-    (role === "ADMIN"
-      ? "admin@vallerparts.co.tz"
-      : "user@vallerparts.co.tz")
+    (role === "ADMIN" ? "admin@vallerparts.co.tz" : "user@vallerparts.co.tz")
 
   if (
     cachedUser &&
@@ -126,7 +141,6 @@ export function getClientDashboardUser(): DashboardUser | null {
 
   return cachedUser
 }
-
 
 export function subscribeToAuthSession(onStoreChange: () => void) {
   if (typeof window === "undefined") {

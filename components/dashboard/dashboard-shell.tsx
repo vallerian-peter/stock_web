@@ -27,6 +27,7 @@ import {
 } from "lucide-react"
 
 import { useLandingLocale } from "@/components/landing-locale-provider"
+import { DashboardPreferenceSync } from "@/components/dashboard/dashboard-preference-sync"
 import { NotificationsProvider } from "@/components/notifications/notifications-provider"
 import { NotificationsSheet } from "@/components/notifications/notifications-sheet"
 import { Logo } from "@/components/logo"
@@ -469,6 +470,7 @@ function DashboardFooter() {
 export function DashboardShell({ children, user }: DashboardShellProps) {
   return (
     <NotificationsProvider>
+      <DashboardPreferenceSync />
       <SidebarProvider defaultOpen>
         <DashboardSidebar user={user} />
         <SidebarInset className="min-h-auto min-w-0 bg-[radial-gradient(circle_at_top,_rgba(249,115,22,0.12),_transparent_32%),linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,250,252,0.96))] dark:bg-[radial-gradient(circle_at_top,_rgba(249,115,22,0.08),_transparent_28%),linear-gradient(180deg,rgba(9,9,11,0.96),rgba(18,18,22,0.98))]">

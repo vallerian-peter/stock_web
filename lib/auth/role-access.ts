@@ -32,6 +32,7 @@ export const ROLE_ACCESS = {
     "outgoing",
     "sales",
     "notifications",
+    "settings",
     "helpCenter",
     "account",
   ],

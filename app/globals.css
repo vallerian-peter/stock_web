@@ -130,6 +130,15 @@
   html {
     @apply font-sans;
   }
+
+  html[data-compact-tables="true"] [data-slot="table-head"] {
+    height: 2rem;
+  }
+
+  html[data-compact-tables="true"] [data-slot="table-cell"] {
+    padding-top: 0.3rem;
+    padding-bottom: 0.3rem;
+  }
 }
 
 @layer components {
